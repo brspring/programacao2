@@ -9,6 +9,6 @@ int main(){
     fgets (str, 100, stdin);
 
     for (int strlen(str); i >= 0; i--){
-        putchar(str[i]);
+        putchar(str[i]); 
     }
 }
