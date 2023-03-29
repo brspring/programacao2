@@ -16,7 +16,7 @@ int main(){
     }
 
     for (i = 0; i < strlen(str); i++)
-    putchar(str[i]);
+        putchar(str[i]);
     //puts(str) teria o mesmo efeito que esse for
     return 0;
 }

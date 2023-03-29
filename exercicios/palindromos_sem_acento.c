@@ -28,10 +28,12 @@ char *rmvSpecialChar(char str[]) {
 int main() {
     char str[SIZE+1];
     int temp;
+
     fgets(str, SIZE, stdin);
 
     char *new_str = rmvSpecialChar(str);
     char backwards_string[strlen(new_str)+1];
+    
     printf("%s\n", new_str);
 
     int i = 0;

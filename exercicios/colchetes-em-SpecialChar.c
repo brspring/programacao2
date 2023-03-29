@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include <ctype.h> 
 
 #define SIZE 100
 
@@ -12,11 +12,10 @@ int main() {
     printf("Digite uma string: ");
     fgets(str, sizeof(str), stdin);
 
-    // Adiciona colchetes ao redor do caractere 'A'
     for (i = 0; str[i] != '\0'; i++) {
         temp = str[i];
         if (!isalnum(str[i]) && str[i] != ' ' && str[i] != '\0' && str[i] != '\n') {
-            for (j = strlen(str); j > i; j--) {
+            for (j = strlen(str); j > i; j--) { /*abre espaço de duas posicoes na string para inserir o []*/
                 str[j+2] = str[j];
             }
             str[i] = '[';
