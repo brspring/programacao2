@@ -12,6 +12,9 @@ Note que deve alocar dinamicamente a string que será utilizada para armazenar o
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int main()
 {
@@ -23,11 +26,16 @@ int main()
         return 1;
     }
 
+    struct stat var;
+    stat("poema.bin", &var);
+    int filesize = var.st_size;
+    
+/*
     // determinar tamanho do arquivo
     fseek(arq, 0, SEEK_END); //coloca o ponteiro no final do arq
     int filesize = ftell(arq); //retorna a posicao do ponteiro em relacao ao inicio do arquivo
     rewind(arq); //joga o ponteiro para o inicio novamente
-
+*/
     // alocar espaço para a string
     char *poema = malloc(filesize);
 
