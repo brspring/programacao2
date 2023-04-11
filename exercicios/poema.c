@@ -38,7 +38,7 @@ int main()
         rewind(arq); //joga o ponteiro para o inicio novamente
     */
     // alocar espaço para a string
-    char *poema = malloc(filesize/5);
+    char *poema = malloc(filesize/5); /*divide por 5 pois eh para pegar somente o char do arquivo binario ofe*/
 
     if (!poema)
     {
@@ -50,7 +50,7 @@ int main()
     int posicao;
     char c;
 
-    while (fread(&posicao, sizeof(int), 1, arq) == 1)
+    while (fread(&posicao, sizeof(int), 1, arq))
     {
         fread(&c, sizeof(char), 1, arq);
         poema[posicao] = c;
