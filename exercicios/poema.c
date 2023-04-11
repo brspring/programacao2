@@ -25,19 +25,20 @@ int main()
         perror("Erro em abrir o arquivo!\n");
         return 1;
     }
-
+    /*chama a struc stat para a variavel var, essa struct contem diversos dados sobre determinado arquivo binario,
+    ver na wiki do maziero na secao sobre arquivos binarios*/
     struct stat var;
     stat("poema.bin", &var);
     int filesize = var.st_size;
-    
-/*
-    // determinar tamanho do arquivo
-    fseek(arq, 0, SEEK_END); //coloca o ponteiro no final do arq
-    int filesize = ftell(arq); //retorna a posicao do ponteiro em relacao ao inicio do arquivo
-    rewind(arq); //joga o ponteiro para o inicio novamente
-*/
+
+    /*
+        // determinar tamanho do arquivo
+        fseek(arq, 0, SEEK_END); //coloca o ponteiro no final do arq
+        int filesize = ftell(arq); //retorna a posicao do ponteiro em relacao ao inicio do arquivo
+        rewind(arq); //joga o ponteiro para o inicio novamente
+    */
     // alocar espaço para a string
-    char *poema = malloc(filesize);
+    char *poema = malloc(filesize/5);
 
     if (!poema)
     {
