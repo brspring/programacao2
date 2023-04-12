@@ -37,7 +37,7 @@ int main()
     {
         printf("%d\n", numeros[i]);
     }
-
+    printf("Ultimos numeros: \n");
     fseek(arq, -numIntegersToRead * sizeof(int), SEEK_END);
     fread(numeros, sizeof(int), 10, arq);
     for (int i = 0; i < 10; i++)

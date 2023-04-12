@@ -9,8 +9,8 @@ int main() {
     char word[MAX_WORD_LEN]; // palavra sendo lida do arquivo
     char *new_text = NULL; // novo texto com as palavras modificadas
     char *p = NULL; // ponteiro para percorrer o texto
-    size_t text_size = 0; // tamanho do texto original
-    size_t new_text_size = 0; // tamanho do novo texto
+    int text_size = 0; // tamanho do texto original
+    int new_text_size = 0; // tamanho do novo texto
     int found_vida = 0; // flag indicando se a palavra "vida" foi encontrada
     FILE *fp; // ponteiro para o arquivo
 
