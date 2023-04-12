@@ -16,7 +16,7 @@ int main()
     }
 
     fgets (line, LINESIZE, file);
-
+    
     int a, b;
     char *token;
 
