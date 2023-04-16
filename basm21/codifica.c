@@ -66,14 +66,14 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    nodo_l_t *current = vetorASCII[index_pos];
-                    while (current->prox != NULL)
+                    nodo_l_t *atual = vetorASCII[index_pos];
+                    while (atual->prox != NULL)
                     {
-                        current = current->prox;
+                        atual = atual->prox;
                     }
-                    current->prox = (nodo_l_t *)malloc(sizeof(nodo_l_t));
-                    current->prox->elemento = posicao;
-                    current->prox->prox = NULL;
+                    atual->prox = (nodo_l_t *)malloc(sizeof(nodo_l_t));
+                    atual->prox->elemento = posicao;
+                    atual->prox->prox = NULL;
                 }
 
                 primeiraLetra = false; // atualiza para que a próxima letra não seja a primeira de uma palavra
@@ -94,11 +94,11 @@ int main(int argc, char *argv[])
         {   
             //printf("Lista para letra '%c' criada com sucesso!\n", i);
             printf("Letra '%c': ", i);
-            nodo_l_t *current = vetorASCII[i];
-            while (current != NULL)
+            nodo_l_t *atual = vetorASCII[i];
+            while (atual != NULL)
             {
-                printf("%d ", current->elemento);
-                current = current->prox;
+                printf("%d ", atual->elemento);
+                atual = atual->prox;
             }
             printf("\n");
         }
