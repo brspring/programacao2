@@ -38,21 +38,22 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro
+    /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
     int num_palavras = NumPalavrasLivro(livro);
     printf("O arquivo tem %d palavras.\n", num_palavras);
 
-    // vetor que cada indice eh um caracter da tabela ASCII e ele eh do tipo lista para ter uma lista com a frequencia de cada letra
+    /* vetor que cada indice eh um caracter da tabela ASCII e ele eh do tipo lista para ter uma lista com a frequencia de cada letra*/
     nodo_l_t *vetorASCII[128] = {NULL};
 
     char c;
 
     int posicao = 0;
-    bool primeiraLetra = true; // variável para verificar se é a primeira letra de uma palavra
+    bool primeiraLetra = true; /* variável para verificar se é a primeira letra de uma palavra*/
     while ((c = fgetc(livro)) != EOF)
     {
         c = tolower(c);
-        if (isalnum(c))
+        /*if que identifica se é um alpha numerico ou caracter especial*/
+        if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"' )
         {
             int index_pos = c;
 
@@ -76,24 +77,24 @@ int main(int argc, char *argv[])
                     atual->prox->prox = NULL;
                 }
 
-                primeiraLetra = false; // atualiza para que a próxima letra não seja a primeira de uma palavra
+                primeiraLetra = false; /* atualiza para que a próxima letra não seja a primeira de uma palavra*/
             }
         }
         else if (c == ' ')
         {
-            primeiraLetra = true; // atualiza para que a próxima letra seja a primeira de uma palavra
-            posicao++;            // atualiza a posição
+            primeiraLetra = true; /* atualiza para que a próxima letra seja a primeira de uma palavra */
+            posicao++;            /* atualiza a posição */
         }
     }
 
     rewind(livro);
     
-    //for que printa a tabela de chaves
+    /* for que printa a tabela de chaves*/
     for (int i = 0; i < 128; i++)
     {
         if (vetorASCII[i] != NULL)
         {   
-            //printf("Lista para letra '%c' criada com sucesso!\n", i);
+            /*printf("Lista para letra '%c' criada com sucesso!\n", i);*/
             printf("Letra '%c': ", i);
             nodo_l_t *atual = vetorASCII[i];
             while (atual != NULL)
