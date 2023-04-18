@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     while ((c = fgetc(livro)) != EOF)
     {
         c = tolower(c);
-        if (isalpha(c))
+        if (isalnum(c))
         {
             int index_pos = c;
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
                 primeiraLetra = false; // atualiza para que a próxima letra não seja a primeira de uma palavra
             }
         }
-        else if (c == ' ' || c == '\n')
+        else if (c == ' ')
         {
             primeiraLetra = true; // atualiza para que a próxima letra seja a primeira de uma palavra
             posicao++;            // atualiza a posição
@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
     }
 
     rewind(livro);
-
+    
+    //for que printa a tabela de chaves
     for (int i = 0; i < 128; i++)
     {
         if (vetorASCII[i] != NULL)
