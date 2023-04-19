@@ -46,9 +46,10 @@ int main(int argc, char *argv[])
     nodo_l_t *vetorASCII[128] = {NULL};
 
     char c;
-
     int posicao = 0;
+
     bool primeiraLetra = true; /* variável para verificar se é a primeira letra de uma palavra*/
+
     while ((c = fgetc(livro)) != EOF)
     {
         c = tolower(c);
@@ -56,6 +57,8 @@ int main(int argc, char *argv[])
         if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"' )
         {
             int index_pos = c;
+
+            /*printf("%d ", index_pos);*/
 
             if (primeiraLetra)
             {
@@ -65,6 +68,7 @@ int main(int argc, char *argv[])
                     vetorASCII[index_pos]->elemento = posicao;
                     vetorASCII[index_pos]->prox = NULL;
                 }
+                //sem esse else ele guarda uma posicao de cada letra, ver dps
                 else
                 {
                     nodo_l_t *atual = vetorASCII[index_pos];
@@ -88,14 +92,12 @@ int main(int argc, char *argv[])
     }
 
     rewind(livro);
-    
     /* for que printa a tabela de chaves*/
     for (int i = 0; i < 128; i++)
     {
         if (vetorASCII[i] != NULL)
         {   
-            /*printf("Lista para letra '%c' criada com sucesso!\n", i);*/
-            printf("Letra '%c': ", i);
+            printf("%c: ", i);
             nodo_l_t *atual = vetorASCII[i];
             while (atual != NULL)
             {
