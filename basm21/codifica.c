@@ -54,13 +54,13 @@ int main(int argc, char *argv[])
     {
         c = tolower(c);
         /*if que identifica se é um alpha numerico ou caracter especial*/
-        if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"' )
+        if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"')
         {
             int index_pos = c;
 
             /*printf("%d ", index_pos);*/
 
-            if (primeiraLetra)
+            if (primeiraLetra && c != '\n' && c != ' ')
             {
                 if (vetorASCII[index_pos] == NULL)
                 {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
                     vetorASCII[index_pos]->elemento = posicao;
                     vetorASCII[index_pos]->prox = NULL;
                 }
-                //sem esse else ele guarda uma posicao de cada letra, ver dps
+                // sem esse else ele guarda uma posicao de cada letra, ver dps
                 else
                 {
                     nodo_l_t *atual = vetorASCII[index_pos];
@@ -91,20 +91,28 @@ int main(int argc, char *argv[])
         }
     }
 
+    FILE *ArquivoDeChaves = fopen("ArquivoDeChaves.txt", "w");
+    if (!ArquivoDeChaves)
+    {
+        perror("O arquivo de chaves não foi criado\n");
+        exit(1);
+    }
+
     rewind(livro);
+    
     /* for que printa a tabela de chaves*/
     for (int i = 0; i < 128; i++)
     {
         if (vetorASCII[i] != NULL)
-        {   
-            printf("%c: ", i);
+        {
+            fprintf(ArquivoDeChaves, "%c: ", i);
             nodo_l_t *atual = vetorASCII[i];
             while (atual != NULL)
             {
-                printf("%d ", atual->elemento);
+                fprintf(ArquivoDeChaves, "%d ", atual->elemento);
                 atual = atual->prox;
             }
-            printf("\n");
+            fprintf(ArquivoDeChaves, "\n");
         }
     }
 
