@@ -28,6 +28,66 @@ int NumPalavrasLivro(FILE *livro)
     return cont;
 }
 
+void CriaArquivoDeChaves(nodo_l_t **vetorASCII)
+{
+    FILE *ArquivoDeChaves = fopen("ArquivoDeChaves.txt", "w");
+
+    if (!ArquivoDeChaves)
+    {
+        perror("O arquivo de chaves não foi criado\n");
+    }
+
+    for (int i = 0; i < 128; i++)
+    {
+        if (vetorASCII[i] != NULL)
+        {
+            fprintf(ArquivoDeChaves, "%c: ", i);
+            nodo_l_t *atual = vetorASCII[i];
+            while (atual != NULL)
+            {
+                fprintf(ArquivoDeChaves, "%d ", atual->elemento);
+                atual = atual->prox;
+            }
+            fprintf(ArquivoDeChaves, "\n");
+        }
+    }
+    fclose(ArquivoDeChaves);
+}
+/*
+buffer[100];
+posicao = 0;
+while (fscanf(livro, "%99s", buffer) == 1)
+    {
+    for (int i = 0; buffer[i]; i++)
+    {
+        char c = tolower(buffer[i]);
+        if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"')
+        {
+            int index_pos = c;
+
+            if (i == 0 && c != '\n' && c != ' ')
+            {
+                if (vetorASCII[index_pos] == NULL)
+                {
+                    vetorASCII[index_pos] = (nodo_l_t *)malloc(sizeof(nodo_l_t));
+                    vetorASCII[index_pos]->elemento = posicao;
+                    vetorASCII[index_pos]->prox = NULL;
+                }
+                else
+                {
+                    nodo_l_t *atual = vetorASCII[index_pos];
+                    while (atual->prox != NULL)
+                    {
+                        atual = atual->prox;
+                    }
+                    atual->prox = (nodo_l_t *)malloc(sizeof(nodo_l_t));
+                    atual->prox->elemento = posicao;
+                    atual->prox->prox = NULL;
+                }
+            }
+        }
+    }
+*/
 int main(int argc, char *argv[])
 {
     FILE *livro;
@@ -91,30 +151,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    FILE *ArquivoDeChaves = fopen("ArquivoDeChaves.txt", "w");
-    if (!ArquivoDeChaves)
-    {
-        perror("O arquivo de chaves não foi criado\n");
-        exit(1);
-    }
-
     rewind(livro);
-    
-    /* for que printa a tabela de chaves*/
-    for (int i = 0; i < 128; i++)
-    {
-        if (vetorASCII[i] != NULL)
-        {
-            fprintf(ArquivoDeChaves, "%c: ", i);
-            nodo_l_t *atual = vetorASCII[i];
-            while (atual != NULL)
-            {
-                fprintf(ArquivoDeChaves, "%d ", atual->elemento);
-                atual = atual->prox;
-            }
-            fprintf(ArquivoDeChaves, "\n");
-        }
-    }
+
+    CriaArquivoDeChaves(vetorASCII);
 
     fclose(livro);
     return 0;
