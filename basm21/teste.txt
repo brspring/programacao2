@@ -1,0 +1,35 @@
+/*
+buffer[100];
+posicao = 0;
+while (fscanf(livro, "%99s", buffer) == 1)
+    {
+    for (int i = 0; buffer[i]; i++)
+    {
+        char c = tolower(buffer[i]);
+        if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"')
+        {
+            int index_pos = c;
+
+            if (i == 0 && c != '\n' && c != ' ')
+            {
+                if (vetorASCII[index_pos] == NULL)
+                {
+                    vetorASCII[index_pos] = (nodo_l_t *)malloc(sizeof(nodo_l_t));
+                    vetorASCII[index_pos]->elemento = posicao;
+                    vetorASCII[index_pos]->prox = NULL;
+                }
+                else
+                {
+                    nodo_l_t *atual = vetorASCII[index_pos];
+                    while (atual->prox != NULL)
+                    {
+                        atual = atual->prox;
+                    }
+                    atual->prox = (nodo_l_t *)malloc(sizeof(nodo_l_t));
+                    atual->prox->elemento = posicao;
+                    atual->prox->prox = NULL;
+                }
+            }
+        }
+    }
+*/

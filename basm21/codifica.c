@@ -2,31 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include <stdbool.h>
-#include "liblista.h"
+#include "listaBeale.h"
 
-#define TAM_MAX_LINHA 100
-#define TAM_ASCII 128
-
-int NumPalavrasLivro(FILE *livro)
-{
-    char *string = malloc(sizeof(char) * TAM_MAX_LINHA);
-    int cont = 1;
-
-    while (fgets(string, TAM_MAX_LINHA, livro))
-    {
-        for (int i = 0; string[i] != '\0'; i++)
-        {
-            if (string[i] == ' ' || string[i] == '\n' || string[i] == '\t')
-            {
-                cont++;
-            }
-        }
-    }
-    rewind(livro);
-    free(string);
-    return cont;
-}
 
 void CriaArquivoDeChaves(nodo_l_t **vetorASCII)
 {
@@ -54,19 +33,21 @@ void CriaArquivoDeChaves(nodo_l_t **vetorASCII)
     printf("arquivo craido!\n");
     fclose(ArquivoDeChaves);
 }
-/*
-buffer[100];
-posicao = 0;
-while (fscanf(livro, "%99s", buffer) == 1)
+
+void cria_vetor_de_lista(FILE *arquivo, nodo_l_t **vetorASCII)
+{
+    char c;
+    int posicao = 0;
+
+    bool primeiraLetra = true;
+
+    while ((c = fgetc(arquivo)) != EOF)
     {
-    for (int i = 0; buffer[i]; i++)
-    {
-        char c = tolower(buffer[i]);
+        c = tolower(c);
         if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"')
         {
             int index_pos = c;
-
-            if (i == 0 && c != '\n' && c != ' ')
+            if (primeiraLetra && c != '\n' && c != ' ')
             {
                 if (vetorASCII[index_pos] == NULL)
                 {
@@ -85,39 +66,12 @@ while (fscanf(livro, "%99s", buffer) == 1)
                     atual->prox->elemento = posicao;
                     atual->prox->prox = NULL;
                 }
-            }
-        }
-    }
-*/
-
-void cria_vetor_de_lista(FILE *arquivo, nodo_l_t **vetorASCII) {
-    char c;
-    int posicao = 0;
-
-    bool primeiraLetra = true;
-
-    while ((c = fgetc(arquivo)) != EOF) {
-        c = tolower(c);
-        if (isalnum(c) || c == '!' || c == '@' || c == '(' || c == '$' || c == '#' || c == '-' || c == '&' || c == '%' || c == '=' || c == '"') {
-            int index_pos = c;
-            if (primeiraLetra && c != '\n' && c != ' ') {
-                if (vetorASCII[index_pos] == NULL) {
-                    vetorASCII[index_pos] = (nodo_l_t *)malloc(sizeof(nodo_l_t));
-                    vetorASCII[index_pos]->elemento = posicao;
-                    vetorASCII[index_pos]->prox = NULL;
-                } else {
-                    nodo_l_t *atual = vetorASCII[index_pos];
-                    while (atual->prox != NULL) {
-                        atual = atual->prox;
-                    }
-                    atual->prox = (nodo_l_t *)malloc(sizeof(nodo_l_t));
-                    atual->prox->elemento = posicao;
-                    atual->prox->prox = NULL;
-                }
 
                 primeiraLetra = false;
             }
-        } else if (c == ' ') {
+        }
+        else if (c == ' ')
+        {
             primeiraLetra = true;
             posicao++;
         }
@@ -126,25 +80,31 @@ void cria_vetor_de_lista(FILE *arquivo, nodo_l_t **vetorASCII) {
 
 void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
 {
-    FILE* MensagemCodificada;
-    char chr;    
+    FILE *MensagemCodificada;
+    char chr;
     MensagemCodificada = fopen("MensagemCodificada.txt", "w+");
+    srand(time(NULL));
 
     while ((chr = fgetc(arquivo)) != EOF)
     {
         chr = tolower(chr);
         int index_pos = chr;
-        
-        if(chr == ' ')
+
+        if (chr == ' ')
         {
             fprintf(MensagemCodificada, "%d ", -1);
         }
-
-        if (isalnum(chr) && (chr != ' ')) 
+        else if (isalnum(chr))
         {
             int index_pos = chr;
-            nodo_l_t *teste = vetorASCII[index_pos];
-            fprintf(MensagemCodificada, "%d ", teste->elemento);
+            nodo_l_t *lista_atual = vetorASCII[index_pos];
+
+            /* pego o tamanho da lista para pegar uma posição aleatoria da letra*/
+            int tamanho_lista_atual = tamanho_lista(lista_atual);
+
+            nodo_l_t *no_elemento_aleatorio = elemento_aleatorio(vetorASCII[index_pos], tamanho_lista_atual);
+
+            fprintf(MensagemCodificada, "%d ", no_elemento_aleatorio->elemento);
         }
     }
     fclose(MensagemCodificada);
@@ -170,13 +130,14 @@ int main(int argc, char *argv[])
     rewind(livro);
 
     /*codificar uma mensagem*/
-    FILE* MensagemOriginal;
+    FILE *MensagemOriginal;
     MensagemOriginal = fopen("MensagemOriginal.txt", "r");
 
-    if(!MensagemOriginal){
+    if (!MensagemOriginal)
+    {
         perror("Arquivo com a mensagem não existe\n");
     }
-    
+
     Cria_arq_msg_codificada(MensagemOriginal, vetorASCII);
 
     /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
