@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include "listaBeale.h"
+#include "codifica.h"
 
 
 void CriaArquivoDeChaves(nodo_l_t **vetorASCII)
@@ -78,7 +79,7 @@ void cria_vetor_de_lista(FILE *arquivo, nodo_l_t **vetorASCII)
     }
 }
 
-void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
+FILE* Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
 {
     FILE *MensagemCodificada;
     char chr;
@@ -88,7 +89,6 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
     while ((chr = fgetc(arquivo)) != EOF)
     {
         chr = tolower(chr);
-        int index_pos = chr;
 
         if (chr == ' ')
         {
@@ -107,7 +107,20 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
             fprintf(MensagemCodificada, "%d ", no_elemento_aleatorio->elemento);
         }
     }
-    fclose(MensagemCodificada);
+    return MensagemCodificada;
+}
+
+int buscar_numero(int num, nodo_l_t **vetorASCII) {
+    for (int i = 0; i < 128; i++) {
+        nodo_l_t *atual = vetorASCII[i];
+        while (atual != NULL) {
+            if (atual->elemento == num) {
+                return i;
+            }
+            atual = atual->prox;
+        }
+    }
+    return -2;
 }
 
 int main(int argc, char *argv[])
@@ -138,12 +151,26 @@ int main(int argc, char *argv[])
         perror("Arquivo com a mensagem não existe\n");
     }
 
-    Cria_arq_msg_codificada(MensagemOriginal, vetorASCII);
+    FILE* MensagemCod= Cria_arq_msg_codificada(MensagemOriginal, vetorASCII);
+    char linha[1000];
+    printf("oii\n");
+
+    while (fgets(linha, 1000, MensagemCod)) { // lê uma linha do arquivo
+        printf("%s", linha); // imprime a linha lida
+    }
+
+    int num;
+    fscanf(MensagemCod, "%d", &num);
+
+    int letra_descodificada_msg = buscar_numero(num, vetorASCII);
+
+    printf("%d\n", letra_descodificada_msg);
 
     /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
     int num_palavras = NumPalavrasLivro(livro);
     printf("O arquivo tem %d palavras.\n", num_palavras);
 
+    fclose(MensagemCod);
     fclose(MensagemOriginal);
     fclose(livro);
     return 0;
