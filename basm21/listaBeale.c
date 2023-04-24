@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "listaBeale.h"
+#include "codifica.h"
 
 #define TAM_MAX_LINHA 100
 #define TAM_ASCII 128
@@ -28,6 +29,20 @@ int NumPalavrasLivro(FILE *livro)
     free(string);
     return cont;
 }
+
+/*nodo_l_t *buscar_numero(int num, nodo_l_t **vetorASCII) {
+    for (char i = 0; i < 128; i++) {
+        nodo_l_t *atual = vetorASCII[i];
+        while (atual != NULL) {
+            if (atual->elemento == num) {
+                return i;
+            }
+            atual = atual->prox;
+        }
+    }
+    return NULL;
+}*/
+
 
 nodo_l_t *elemento_aleatorio(nodo_l_t *topo, int tamanho)
 {
