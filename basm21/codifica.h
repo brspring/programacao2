@@ -7,6 +7,6 @@ void cria_vetor_de_lista(FILE *arquivo, nodo_l_t **vetorASCII);
 
 void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII);
 
-char buscar_numero(int num, nodo_l_t **vetorASCII);
+char buscar_numero_lista(int num, nodo_l_t **vetorASCII);
 
 #endif

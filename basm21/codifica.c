@@ -110,7 +110,7 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
     fclose(MensagemCodificada);
 }
 
-char buscar_numero(int num, nodo_l_t **vetorASCII) {
+char buscar_numero_lista(int num, nodo_l_t **vetorASCII) {
     for (int i = 0; i < 128; i++) {
         nodo_l_t *atual = vetorASCII[i];
         while (atual != NULL) {
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
         {
             fprintf(mensagem_decodificada, "%c" , 32);
         }else{
-        char busca = buscar_numero(char_codificado, vetorASCII);
+        char busca = buscar_numero_lista(char_codificado, vetorASCII);
         fprintf(mensagem_decodificada, "%c" , busca);
         }
     }
