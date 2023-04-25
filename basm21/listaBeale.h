@@ -14,4 +14,6 @@ nodo_l_t *elemento_aleatorio(nodo_l_t *topo, int tamanho);
 
 int tamanho_lista(nodo_l_t *head);
 
+char buscar_numero_lista(int num, nodo_l_t **vetorASCII);
+
 #endif

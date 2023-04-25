@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "listaBeale.h"
-#include "codifica.h"
+#include "codifica_decodifica.h"
 
 #define TAM_MAX_LINHA 100
 #define TAM_ASCII 128
@@ -71,4 +71,17 @@ int tamanho_lista(nodo_l_t *head)
     }
 
     return tamanho;
+}
+
+char buscar_numero_lista(int num, nodo_l_t **vetorASCII) {
+    for (int i = 0; i < 128; i++) {
+        nodo_l_t *atual = vetorASCII[i];
+        while (atual != NULL) {
+            if (atual->elemento == num) {
+                return i;
+            }
+            atual = atual->prox;
+        }
+    }
+    return -2;
 }
