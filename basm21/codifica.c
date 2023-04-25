@@ -107,9 +107,10 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
             fprintf(MensagemCodificada, "%d ", no_elemento_aleatorio->elemento);
         }
     }
+    fclose(MensagemCodificada);
 }
 
-int buscar_numero(int num, nodo_l_t **vetorASCII) {
+char buscar_numero(int num, nodo_l_t **vetorASCII) {
     for (int i = 0; i < 128; i++) {
         nodo_l_t *atual = vetorASCII[i];
         while (atual != NULL) {
@@ -148,15 +149,39 @@ int main(int argc, char *argv[])
     if (!MensagemOriginal)
     {
         perror("Arquivo com a mensagem não existe\n");
+        return 1;
     }
 
     Cria_arq_msg_codificada(MensagemOriginal, vetorASCII);
 
-    /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
-    int num_palavras = NumPalavrasLivro(livro);
-    printf("O arquivo tem %d palavras.\n", num_palavras);
+    /*novo arquivo com a mensagem codificada para ser usado na decodificação*/
+    FILE* mensagem_decodificada = fopen("MensagemDecodificada.txt", "w");
+    FILE* mensagem_codificada = fopen("MensagemCodificada.txt", "r");
+    //12 32 23 
+    if(!mensagem_codificada){
+        printf("Arquivo com a mensagem codificada não encontrado.\n");
+        return 1;
+    }
 
-    //fclose(MensagemCod);
+    /*Decodifica a mensagem*/
+    int char_codificado;
+    
+    while(fscanf(mensagem_codificada, "%d", &char_codificado) != EOF){
+        if(char_codificado == -1)
+        {
+            fprintf(mensagem_decodificada, "%c" , 32);
+        }else{
+        char busca = buscar_numero(char_codificado, vetorASCII);
+        fprintf(mensagem_decodificada, "%c" , busca);
+        }
+    }
+
+    /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
+    /*int num_palavras = NumPalavrasLivro(livro);*/
+    /*printf("O arquivo tem %d palavras.\n", num_palavras);*/
+
+    fclose(mensagem_decodificada);
+    fclose(mensagem_codificada);
     fclose(MensagemOriginal);
     fclose(livro);
     return 0;
