@@ -111,7 +111,7 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
 }
 
 
-void descodifica_msg_arq_de_chaves(FILE* arquivo, nodo_l_t **vetorASCII) {
+void decodifica_msg_arq_de_chaves(FILE* arquivo, nodo_l_t **vetorASCII) {
     /*novo arquivo com a mensagem codificada para ser usado na decodificação*/
     FILE* mensagem_decodificada = fopen("MensagemDecodificada.txt", "w");
 
@@ -128,6 +128,22 @@ void descodifica_msg_arq_de_chaves(FILE* arquivo, nodo_l_t **vetorASCII) {
         }
     }
     fclose(mensagem_decodificada);
+}
+
+void libera_vetor_de_lista(nodo_l_t **vetorASCII) {
+    nodo_l_t *atual, *prox;
+
+    for (int i = 0; i < 256; i++) {
+        if (vetorASCII[i] != NULL) {
+            atual = vetorASCII[i];
+            while (atual != NULL) {
+                prox = atual->prox;
+                free(atual);
+                atual = prox;
+            }
+        }
+    }
+    free(vetorASCII);
 }
 
 int main(int argc, char *argv[])
@@ -164,12 +180,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    descodifica_msg_arq_de_chaves(mensagem_codificada, vetorASCII);
+    decodifica_msg_arq_de_chaves(mensagem_codificada, vetorASCII);
 
     /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
     int num_palavras = NumPalavrasLivro(livro);
     printf("O arquivo tem %d palavras.\n", num_palavras);
 
+    libera_vetor_de_lista(vetorASCII);
     fclose(mensagem_codificada);
     fclose(MensagemOriginal);
     fclose(livro);
