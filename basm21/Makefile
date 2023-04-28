@@ -1,2 +1,16 @@
-teste: codifica.c codifica.h listaBeale.c listaBeale.h
-	gcc -g -Wall -o codifica codifica.c listaBeale.c
+parametrosCompilacao=-Wall #-Wshadow
+nomePrograma=beale
+
+all: $(nomePrograma)
+
+$(nomePrograma): codifica_decodifica.o listaBeale.o
+	gcc -o $(nomePrograma) codifica_decodifica.o listaBeale.o $(parametrosCompilacao)
+
+codifica_decodifica.o: codifica_decodifica.c
+	gcc -c codifica_decodifica.c $(parametrosCompilacao)
+
+ordenacao.o: listaBeale.h 	listaBeale.c
+	gcc -c listaBeale.c $(parametrosCompilacao)
+
+clean:
+	rm -f *.o *.gch $(nomePrograma)
