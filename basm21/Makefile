@@ -1,4 +1,4 @@
-parametrosCompilacao=-Wall #-Wshadow
+parametrosCompilacao=-std=c99 -Wall -Wshadow 
 nomePrograma=beale
 
 all: $(nomePrograma)
@@ -9,7 +9,7 @@ $(nomePrograma): codifica_decodifica.o listaBeale.o
 codifica_decodifica.o: codifica_decodifica.c
 	gcc -c codifica_decodifica.c $(parametrosCompilacao)
 
-ordenacao.o: listaBeale.h 	listaBeale.c
+listaBeale.o: listaBeale.h listaBeale.c
 	gcc -c listaBeale.c $(parametrosCompilacao)
 
 clean:

@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <stdbool.h>
+#include <getopt.h>
 #include "listaBeale.h"
 #include "codifica_decodifica.h"
 
@@ -160,6 +161,74 @@ int main(int argc, char *argv[])
     nodo_l_t *vetorASCII[128] = {NULL};
 
     cria_vetor_de_lista(livro, vetorASCII);
+
+
+
+
+
+
+
+
+
+
+
+
+
+int option;
+while ((option = getopt(argc, argv, "eb:m:o:c:di:")) != -1)
+    {
+        switch (option)
+        {
+        case 'e':
+           
+            break;
+
+        case 'd':
+            
+            break;
+
+        case 'b':
+            
+            break;
+
+        case 'm':
+            
+            break;
+
+        case 'i':
+            
+            break;
+
+        case 'o':
+        
+            break;
+
+        case 'c':
+            break;
+
+        default:
+            printf("Insira uma opcao valida.\n");
+            break;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     cria_arquivo_de_chaves(vetorASCII);
 
     /*codificar uma mensagem*/
@@ -181,12 +250,11 @@ int main(int argc, char *argv[])
     }
 
     decodifica_msg_arq_de_chaves(mensagem_codificada, vetorASCII);
-
     /*nao sei se vou usar, mas coloca em uma variavel o numerod e palavras do livro*/
     int num_palavras = NumPalavrasLivro(livro);
     printf("O arquivo tem %d palavras.\n", num_palavras);
 
-    libera_vetor_de_lista(vetorASCII);
+    //libera_vetor_de_lista(vetorASCII);
     fclose(mensagem_codificada);
     fclose(MensagemOriginal);
     fclose(livro);
