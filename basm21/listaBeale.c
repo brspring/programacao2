@@ -85,3 +85,17 @@ char buscar_numero_lista(int num, nodo_l_t **vetorASCII) {
     }
     return -2;
 }
+
+void libera_vetor_ASCII(nodo_l_t **vetorASCII){
+    for (int i = 0; i < 128; i++)
+    { 
+        nodo_l_t *atual = vetorASCII[i];
+        while (atual != NULL)
+        {
+            nodo_l_t *proximo = atual->prox;
+            free(atual);
+            atual = proximo;
+        }
+        vetorASCII[i] = NULL;
+    }
+}

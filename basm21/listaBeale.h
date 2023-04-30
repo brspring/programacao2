@@ -16,4 +16,6 @@ int tamanho_lista(nodo_l_t *head);
 
 char buscar_numero_lista(int num, nodo_l_t **vetorASCII);
 
+void libera_vetor_ASCII(nodo_l_t **vetorASCII);
+
 #endif
