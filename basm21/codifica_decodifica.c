@@ -84,6 +84,7 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
     FILE *MensagemCodificada;
     char chr;
     MensagemCodificada = fopen("MensagemCodificada.txt", "w+");
+
     srand(time(NULL));
 
     while ((chr = fgetc(arquivo)) != EOF)
@@ -99,12 +100,17 @@ void Cria_arq_msg_codificada(FILE *arquivo, nodo_l_t **vetorASCII)
             int index_pos = chr;
             nodo_l_t *lista_atual = vetorASCII[index_pos];
 
+            if(vetorASCII[index_pos] == NULL){
+                fprintf(MensagemCodificada, "%d ", -404);
+            }else{
+
             /* pego o tamanho da lista para pegar uma posição aleatoria da letra*/
             int tamanho_lista_atual = tamanho_lista(lista_atual);
 
             nodo_l_t *no_elemento_aleatorio = elemento_aleatorio(vetorASCII[index_pos], tamanho_lista_atual);
 
             fprintf(MensagemCodificada, "%d ", no_elemento_aleatorio->elemento);
+            }
         }
     }
     fclose(MensagemCodificada);
@@ -131,8 +137,10 @@ void cria_arq_msg_decodificada(nodo_l_t **vetorASCII)
         if (char_codificado == -1)
         {
             fprintf(mensagem_decodificada, "%c", 32);
-        }
-        else
+        }else if (char_codificado == -404) 
+        {
+            fprintf(mensagem_decodificada, "%s", "(?)");
+        }else
         {
             char busca = buscar_numero_lista(char_codificado, vetorASCII);
             fprintf(mensagem_decodificada, "%c", busca);
@@ -173,16 +181,16 @@ void cria_vetor_de_lista_com_arq_de_chaves(nodo_l_t **vetorASCII)
         exit(1);
     }
 
-    char linha[1000];
+    char linha[10000];
 
-    while (fgets(linha, 1000, arquivo_de_chaves) != NULL)
+    while (fgets(linha, 10000, arquivo_de_chaves) != NULL)
     {
         char *separador = strtok(linha, ": \n"); /* quebra a linha  com base nos : \n"*/
 
         if (separador != NULL)
         {
             int indice = separador[0]; /*a primeira letra que é o indice do vetor*/
-
+            indice = tolower(indice);
             separador = strtok(NULL, ": \n"); /*vai para o indice*/
 
             while (separador != NULL) /*vai por separadores*/
