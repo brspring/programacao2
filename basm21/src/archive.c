@@ -7,24 +7,27 @@
 #include <time.h>
 #include "archive.h"
 
-void incluirArquivo(FILE *arquivador, const FileInfo_t *arquivo) {
-    fwrite(arquivo, sizeof(FileInfo_t), 1, arquivador);
-}
-
-void liberarLista(nodo_t *head) {
+void liberarLista(nodo_t *head)
+{
     nodo_t *atual = head;
-    while (atual != NULL) {
+    while (atual != NULL)
+    {
         nodo_t *proximo = atual->prox;
         free(atual);
         atual = proximo;
     }
 }
 
-int main() {
+int main()
+{
+    /*
+
+    INCLUINDO VARIOS ARQUIVOS NA MAO 
+
+
     FileInfo_t arquivo1;
-    arquivo1.name = "a.txt";
-    arquivo1.nome_original = "a.txt";
-    arquivo1.posicao = 0;
+    arquivo1.name[0] = 'a';
+    arquivo1.name[1] = 0;
     arquivo1.tam_inic = 8;
     arquivo1.tam = 8;
     arquivo1.st_dev = 0;
@@ -33,60 +36,43 @@ int main() {
     arquivo1.UserID = getuid();
     arquivo1.GroupID = getgid();
 
+    FileInfo_t arquivo2;
+    arquivo2.name[0] = 'b';
+    arquivo2.name[1] = 0;
+    arquivo2.posicao = 0;
+    arquivo2.tam_inic = 4;
+    arquivo2.tam = 4;
+    arquivo2.st_dev = 0;
+    arquivo2.permissoes = 777;
+    arquivo2.ult_modif = time(NULL);
+    arquivo2.UserID = getuid();
+    arquivo2.GroupID = getgid();
+
     FILE *arquivador = fopen("backup.vpp", "wb+");
-    if (arquivador == NULL) {
+    long long offset =  12;
+
+    if (arquivador == NULL)
+    {
         printf("Erro ao abrir o arquivo de arquivador\n");
         return 1;
     }
 
-    incluirArquivo(arquivador, &arquivo1);
+    fwrite(&offset, sizeof(long long), 1, arquivador);
+    char buffer[8];
 
-    if (arquivador == NULL) {
-        printf("Erro ao abrir o arquivo de arquivador\n");
-        return 1;
-    }
+    memset(buffer, 'a', 8);
+    fwrite(buffer, sizeof(char), 8, arquivador);
 
-    archive_t archive;
-    archive.qntd = 0;
-    archive.head = NULL;
-    archive.ult = NULL;
+    memset(buffer, 'b', 4);
+    fwrite(buffer, sizeof(char), 4, arquivador);
 
-    /* Le os metadados dos arquivos do arquivador e adiciona a lista*/
-    while (1) {
-        nodo_t *novoNodo = (nodo_t *)malloc(sizeof(nodo_t));
-
-        size_t bytesLidos = fread(&(novoNodo->arquivo), sizeof(FileInfo_t), 1, arquivador);
-
-        if (bytesLidos != 1) {
-            free(novoNodo);
-            break;
-        }
-
-        novoNodo->prox = NULL;
-
-        if (archive.head == NULL) {
-            /* Se a lista ta vazia, o novo nodo se torna a cabeca da lista */
-            archive.head = novoNodo;
-            archive.ult = novoNodo;
-        } else {
-            /* Se nn adicionamos o novo nodo no final da lista*/
-            archive.ult->prox = novoNodo;
-            archive.ult = novoNodo;
-        }
-
-        archive.qntd++;
-    }
+    fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
+    fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
 
     fclose(arquivador);
 
-    nodo_t *nodoAtual = archive.head;
-    while (nodoAtual != NULL) {
-        printf("Nome do arquivo: %s\n", nodoAtual->arquivo.name);
+    falta colocar o arquivador */
 
-        nodoAtual = nodoAtual->prox;
-    }
-
-    liberarLista(archive.head);
-
+    
     return 0;
 }

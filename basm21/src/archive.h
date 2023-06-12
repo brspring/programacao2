@@ -6,8 +6,7 @@
 #include <time.h>
 
 typedef struct FileInfo {
-    char *name;
-    char *nome_original;
+    char name[1024];
     int posicao;
 
     size_t tam_inic;
@@ -28,10 +27,10 @@ typedef struct nodo_l {
 } nodo_l;
 
 
-typedef struct archive {
+typedef struct dir {
     unsigned int qntd;
     nodo_t *head;
     nodo_t *ult;
-} archive_t;
+} dir_t;
 
 #endif
