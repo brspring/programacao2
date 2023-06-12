@@ -20,15 +20,18 @@ typedef struct FileInfo {
     gid_t  GroupID;
 } FileInfo_t;
 
+typedef struct nodo_l nodo_t;  
+
 typedef struct nodo_l {
     FileInfo_t arquivo;
-    nodo_t* prox;
-} nodo_t;
+    nodo_t* prox; 
+} nodo_l;
+
 
 typedef struct archive {
     unsigned int qntd;
     nodo_t *head;
     nodo_t *ult;
-} archive;
+} archive_t;
 
 #endif
