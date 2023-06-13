@@ -19,12 +19,7 @@ void liberarLista(nodo_t *head)
 }
 
 int main()
-{
-    /*
-
-    INCLUINDO VARIOS ARQUIVOS NA MAO 
-
-
+{ 
     FileInfo_t arquivo1;
     arquivo1.name[0] = 'a';
     arquivo1.name[1] = 0;
@@ -49,13 +44,18 @@ int main()
     arquivo2.GroupID = getgid();
 
     FILE *arquivador = fopen("backup.vpp", "wb+");
-    long long offset =  12;
+
+    /*crio um arquivo copia em que eu nao farei mudanças*/
+    FILE *backup_arquivador =  fopen("copia.vpp", "wb+");
 
     if (arquivador == NULL)
     {
         printf("Erro ao abrir o arquivo de arquivador\n");
         return 1;
     }
+
+    /*offset contem o tamanho do arquivo no inicio dele*/
+    long long offset =  arquivo2.tam + arquivo1.tam;
 
     fwrite(&offset, sizeof(long long), 1, arquivador);
     char buffer[8];
@@ -69,10 +69,15 @@ int main()
     fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
     fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
 
+    rewind(arquivador);
+
+    int ch;
+    while ((ch = fgetc(arquivador)) != EOF) {
+        fputc(ch, backup_arquivador);
+    }
+
+    fclose(backup_arquivador);
     fclose(arquivador);
-
-    falta colocar o arquivador */
-
     
     return 0;
 }
