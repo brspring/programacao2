@@ -7,22 +7,53 @@
 #include <time.h>
 #include "archive.h"
 
-void liberarLista(nodo_t *head)
+void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo)
 {
-    nodo_t *atual = head;
+    nodo_t *novoNodo = malloc(sizeof(nodo_t));
+    novoNodo->arquivo = *arquivo;
+    novoNodo->prox = NULL;
+
+    if (diretorio->head == NULL)
+    {
+        diretorio->head = novoNodo;
+        diretorio->ult = novoNodo;
+    }
+    else
+    {
+        diretorio->ult->prox = novoNodo;
+        diretorio->ult = novoNodo;
+    }
+
+    diretorio->qntd++;
+}
+
+void liberarDiretorio(dir_t *diretorio)
+{
+    nodo_t *atual = diretorio->head;
     while (atual != NULL)
     {
         nodo_t *proximo = atual->prox;
         free(atual);
         atual = proximo;
     }
+
+    diretorio->head = NULL;
+    diretorio->ult = NULL;
+    diretorio->qntd = 0;
 }
 
+void cria_dados_teste(){
+
+}
 int main()
-{ 
+{
+    dir_t diretorio;
+    diretorio.qntd = 0;
+    diretorio.head = NULL;
+    diretorio.ult = NULL;
+
     FileInfo_t arquivo1;
-    arquivo1.name[0] = 'a';
-    arquivo1.name[1] = 0;
+    strcpy(arquivo1.name, "a.txt");
     arquivo1.tam_inic = 8;
     arquivo1.tam = 8;
     arquivo1.st_dev = 0;
@@ -32,8 +63,7 @@ int main()
     arquivo1.GroupID = getgid();
 
     FileInfo_t arquivo2;
-    arquivo2.name[0] = 'b';
-    arquivo2.name[1] = 0;
+    strcpy(arquivo2.name, "b.txt");
     arquivo2.posicao = 0;
     arquivo2.tam_inic = 4;
     arquivo2.tam = 4;
@@ -42,22 +72,28 @@ int main()
     arquivo2.ult_modif = time(NULL);
     arquivo2.UserID = getuid();
     arquivo2.GroupID = getgid();
+    
+    adicionarArquivo(&diretorio, &arquivo1);
+    adicionarArquivo(&diretorio, &arquivo2);
 
     FILE *arquivador = fopen("backup.vpp", "wb+");
-
-    /*crio um arquivo copia em que eu nao farei mudanças*/
-    FILE *backup_arquivador =  fopen("copia.vpp", "wb+");
-
     if (arquivador == NULL)
     {
         printf("Erro ao abrir o arquivo de arquivador\n");
         return 1;
     }
 
-    /*offset contem o tamanho do arquivo no inicio dele*/
-    long long offset =  arquivo2.tam + arquivo1.tam;
+    //calcula o tamanho do offset
+    long long offset = 0;
+    nodo_t *agr = diretorio.head;
+    while (agr != NULL)
+    {
+        offset += agr->arquivo.tam;
+        agr = agr->prox;
+    }
 
     fwrite(&offset, sizeof(long long), 1, arquivador);
+
     char buffer[8];
 
     memset(buffer, 'a', 8);
@@ -69,15 +105,18 @@ int main()
     fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
     fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
 
+
+    // escreve a lista de metadadados
+    /*nodo_t *atual = diretorio.head;
+    while (atual != NULL)
+    {
+        fwrite(&(atual->arquivo), sizeof(FileInfo_t), 1, arquivador);
+        atual = atual->prox;
+    }*/
+
     rewind(arquivador);
-
-    int ch;
-    while ((ch = fgetc(arquivador)) != EOF) {
-        fputc(ch, backup_arquivador);
-    }
-
-    fclose(backup_arquivador);
     fclose(arquivador);
-    
+    liberarDiretorio(&diretorio);
+
     return 0;
 }
