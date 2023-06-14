@@ -41,11 +41,8 @@ void liberarDiretorio(dir_t *diretorio)
     diretorio->ult = NULL;
     diretorio->qntd = 0;
 }
-
-void cria_dados_teste(){
-
-}
-int main()
+/*essa funcao serve apenas para testar a criacao de alguns dados*/
+void cria_dados_teste()
 {
     dir_t diretorio;
     diretorio.qntd = 0;
@@ -72,9 +69,13 @@ int main()
     arquivo2.ult_modif = time(NULL);
     arquivo2.UserID = getuid();
     arquivo2.GroupID = getgid();
-    
+
     adicionarArquivo(&diretorio, &arquivo1);
     adicionarArquivo(&diretorio, &arquivo2);
+}
+int main()
+{
+    // cria_dados_teste();
 
     FILE *arquivador = fopen("backup.vpp", "wb+");
     if (arquivador == NULL)
@@ -83,7 +84,7 @@ int main()
         return 1;
     }
 
-    //calcula o tamanho do offset
+    // calcula o tamanho do offset
     long long offset = 0;
     nodo_t *agr = diretorio.head;
     while (agr != NULL)
@@ -104,7 +105,6 @@ int main()
 
     fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
     fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
-
 
     // escreve a lista de metadadados
     /*nodo_t *atual = diretorio.head;
