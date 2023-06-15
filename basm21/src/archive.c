@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
+
 #include <unistd.h>
 #include <time.h>
 #include "archive.h"
@@ -41,16 +43,34 @@ void liberarDiretorio(dir_t *diretorio)
     diretorio->ult = NULL;
     diretorio->qntd = 0;
 }
-/*essa funcao serve apenas para testar a criacao de alguns dados*/
-void cria_dados_teste()
+
+nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome)
 {
-    dir_t diretorio;
-    diretorio.qntd = 0;
-    diretorio.head = NULL;
-    diretorio.ult = NULL;
+    nodo_t *atual = diretorio->head;
+    while (atual != NULL)
+    {
+        if (strcmp(atual->arquivo.nome, nome) == 0)
+        {
+            return atual;
+        }
+        atual = atual->prox;
+    }
+    return NULL;
+}
+
+int tamanho(FILE *archive)
+{
+    struct stat f_data;
+
+    fstat(fileno(archive), &f_data);
+    return f_data.st_size;
+}
+
+dir_t cria_teste(FILE* arquivador, dir_t diretorio)
+{
 
     FileInfo_t arquivo1;
-    strcpy(arquivo1.name, "a.txt");
+    strcpy(arquivo1.nome, "a.txt");
     arquivo1.tam_inic = 8;
     arquivo1.tam = 8;
     arquivo1.st_dev = 0;
@@ -60,7 +80,7 @@ void cria_dados_teste()
     arquivo1.GroupID = getgid();
 
     FileInfo_t arquivo2;
-    strcpy(arquivo2.name, "b.txt");
+    strcpy(arquivo2.nome, "b.txt");
     arquivo2.posicao = 0;
     arquivo2.tam_inic = 4;
     arquivo2.tam = 4;
@@ -72,17 +92,6 @@ void cria_dados_teste()
 
     adicionarArquivo(&diretorio, &arquivo1);
     adicionarArquivo(&diretorio, &arquivo2);
-}
-int main()
-{
-    // cria_dados_teste();
-
-    FILE *arquivador = fopen("backup.vpp", "wb+");
-    if (arquivador == NULL)
-    {
-        printf("Erro ao abrir o arquivo de arquivador\n");
-        return 1;
-    }
 
     // calcula o tamanho do offset
     long long offset = 0;
@@ -106,17 +115,30 @@ int main()
     fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
     fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
 
-    // escreve a lista de metadadados
-    /*nodo_t *atual = diretorio.head;
-    while (atual != NULL)
-    {
-        fwrite(&(atual->arquivo), sizeof(FileInfo_t), 1, arquivador);
-        atual = atual->prox;
-    }*/
-
+    
     rewind(arquivador);
     fclose(arquivador);
-    liberarDiretorio(&diretorio);
 
+    return diretorio;
+}
+int main()
+{
+
+    FILE *arquivador = fopen("backup.vpp", "wb+");
+    if (arquivador == NULL)
+    {
+        printf("Erro ao abrir o arquivo de arquivador\n");
+        return 1;
+    }
+
+    dir_t diretorio;
+    diretorio.qntd = 0;
+    diretorio.head = NULL;
+    diretorio.ult = NULL;
+
+    diretorio = cria_teste(arquivador, diretorio);
+
+
+    liberarDiretorio(&diretorio);
     return 0;
 }

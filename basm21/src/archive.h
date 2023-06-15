@@ -4,11 +4,12 @@
 #include <stddef.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <stdio.h>
 
 typedef struct FileInfo {
-    char name[1024];
+    char nome[256];
+    char path[1024];
     int posicao;
-
     size_t tam_inic;
     size_t tam;
 
@@ -24,8 +25,8 @@ typedef struct nodo_l nodo_t;
 typedef struct nodo_l {
     FileInfo_t arquivo;
     nodo_t* prox; 
+    nodo_t* ant;
 } nodo_l;
-
 
 typedef struct dir {
     unsigned int qntd;
@@ -33,4 +34,27 @@ typedef struct dir {
     nodo_t *ult;
 } dir_t;
 
+void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo);
+
+void liberarDiretorio(dir_t *diretorio);
+
+int tamanho(FILE* archive);
+
+nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
+
 #endif
+
+/*
+    TESTE DA FUNCAO BUSCA
+
+    const char* nomeBuscado = "a.txt";
+    nodo_t* nodoEncontrado = buscarArquivoPorNome(&diretorio, nomeBuscado);
+
+    if (nodoEncontrado != NULL)
+    {
+        printf("Arquivo encontrado: %s\n", nodoEncontrado->arquivo.nome);
+        // Faça o que for necessário com as informações do arquivo encontrado
+    }else
+    {
+        printf("Arquivo não encontrado.\n");
+    }*/
