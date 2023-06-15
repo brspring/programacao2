@@ -22,7 +22,7 @@ typedef struct FileInfo {
 
 typedef struct nodo_l nodo_t;  
 
-typedef struct nodo_l {
+struct nodo_l {
     FileInfo_t arquivo;
     nodo_t* prox; 
     nodo_t* ant;
@@ -38,6 +38,8 @@ void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo);
 
 void liberarDiretorio(dir_t *diretorio);
 
+long long calcula_offset(FILE* arquivador, dir_t diretorio);
+
 int tamanho(FILE* archive);
 
 nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
@@ -45,7 +47,7 @@ nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
 #endif
 
 /*
-    TESTE DA FUNCAO BUSCA
+    TESTE DA FUNCao
 
     const char* nomeBuscado = "a.txt";
     nodo_t* nodoEncontrado = buscarArquivoPorNome(&diretorio, nomeBuscado);

@@ -60,13 +60,26 @@ nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome)
 
 int tamanho(FILE *archive)
 {
+    rewind(archive);
     struct stat f_data;
 
     fstat(fileno(archive), &f_data);
     return f_data.st_size;
 }
 
-dir_t cria_teste(FILE* arquivador, dir_t diretorio)
+long long calcula_offset(FILE *arquivador, dir_t diretorio)
+{
+    long long offset = 0;
+    nodo_t *agr = diretorio.head;
+    while (agr != NULL)
+    {
+        offset += agr->arquivo.tam;
+        agr = agr->prox;
+    }
+    return offset;
+}
+
+dir_t cria_teste(FILE *arquivador, dir_t diretorio)
 {
 
     FileInfo_t arquivo1;
@@ -93,14 +106,7 @@ dir_t cria_teste(FILE* arquivador, dir_t diretorio)
     adicionarArquivo(&diretorio, &arquivo1);
     adicionarArquivo(&diretorio, &arquivo2);
 
-    // calcula o tamanho do offset
-    long long offset = 0;
-    nodo_t *agr = diretorio.head;
-    while (agr != NULL)
-    {
-        offset += agr->arquivo.tam;
-        agr = agr->prox;
-    }
+    long long offset = calcula_offset(arquivador, diretorio);
 
     fwrite(&offset, sizeof(long long), 1, arquivador);
 
@@ -115,30 +121,95 @@ dir_t cria_teste(FILE* arquivador, dir_t diretorio)
     fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
     fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
 
-    
+    printf("tamanho do offset: %lld\n", offset);
     rewind(arquivador);
     fclose(arquivador);
 
     return diretorio;
 }
+
+int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_final)
+{
+    char *buffer[1024];
+    unsigned int tam = tamanho(arch);
+    unsigned int read = b_final;
+    unsigned int write = b_init - 1;
+    unsigned int rt;
+
+    if (b_init > b_final) return 1;
+	if (b_final > tam) return 2;
+
+    if (b_init <= 0){
+        perror("insira um valor maior que zero\n");
+        return 1;
+    } 
+
+    if (read == tam)
+    {
+        ftruncate(fileno(arch), b_init - 1);
+        return 0;
+    }
+
+    while (read < tam)
+    {
+        fseek(arch, read, SEEK_SET);
+        if (tam - read > 1024)
+            rt = fread(buffer, 1, 1024, arch);
+        else
+            rt = fread(buffer, 1, tam - read, arch);
+        fseek(arch, write, SEEK_SET);
+        fwrite(buffer, 1, rt, arch);
+        read += rt;
+        write += rt;
+    }
+
+    rewind(arch);
+    ftruncate(fileno(arch), tam - (b_final - b_init + 1));
+    return 0;
+}
+
 int main()
 {
 
-    FILE *arquivador = fopen("backup.vpp", "wb+");
-    if (arquivador == NULL)
-    {
-        printf("Erro ao abrir o arquivo de arquivador\n");
+    /*  FILE *arquivador = fopen("backup.vpp", "wb+");
+      if (arquivador == NULL)
+      {
+          printf("Erro ao abrir o arquivo de arquivador\n");
+          return 1;
+      }
+
+      dir_t diretorio;
+      diretorio.qntd = 0;
+      diretorio.head = NULL;
+      diretorio.ult = NULL;
+
+      diretorio = cria_teste(arquivador, diretorio);
+      long long offset = calcula_offset(arquivador, diretorio);
+      remove_bytes(arquivador, sizeof(offset), offset);
+
+      liberarDiretorio(&diretorio);*/
+
+    FILE *new = fopen("test.txt", "wb+");
+    if (new == NULL) {
+        perror("Erro ao abrir o arquivo");
         return 1;
     }
 
-    dir_t diretorio;
-    diretorio.qntd = 0;
-    diretorio.head = NULL;
-    diretorio.ult = NULL;
+    char buffer[9] = {'z', 'z', 'z', 'z', 'a', 'a', 'a', 'a', 'a'};
+    fwrite(buffer, 9, 1, new);
+    
+    int a, tam;
+    
+    tam = tamanho(new);
 
-    diretorio = cria_teste(arquivador, diretorio);
+    a = remove_bytes(new, 1, 2);
 
+    //printf("tamanho: %d\n", tam);
+    if (a = 0)
+        printf("sucesso\n");
+    else
+        printf("erro\n");
 
-    liberarDiretorio(&diretorio);
+    fclose(new);
     return 0;
 }
