@@ -67,14 +67,6 @@ int tamanho(FILE *archive)
     return f_data.st_size;
 }
 
-int tamanho2(FILE *arch)
-{
-    fseek(arch, 0, SEEK_END);
-    int tam = ftell(arch);
-    rewind(arch);
-    return tam;
-}
-
 long long calcula_offset(FILE *arquivador, dir_t diretorio)
 {
     long long offset = 0;
@@ -179,49 +171,49 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
     return 0;
 }
 
-int main()
-{
+int remove_member(const char *name, dir_t *diretorio, FILE *arquivador) {
+    nodo_t *removal = buscarArquivoPorNome(diretorio, name);
 
-    /*  FILE *arquivador = fopen("backup.vpp", "wb+");
-      if (arquivador == NULL)
-      {
-          printf("Erro ao abrir o arquivo de arquivador\n");
-          return 1;
-      }
-
-      dir_t diretorio;
-      diretorio.qntd = 0;
-      diretorio.head = NULL;
-      diretorio.ult = NULL;
-
-      diretorio = cria_teste(arquivador, diretorio);
-      long long offset = calcula_offset(arquivador, diretorio);
-      remove_bytes(arquivador, sizeof(offset), offset);
-
-      liberarDiretorio(&diretorio);*/
-
-    FILE *new = fopen("test.txt", "wb+");
-    if (new == NULL)
-    {
-        perror("Erro ao abrir o arquivo");
+    if (removal == NULL) {
         return 1;
     }
 
-    char buffer[9] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'};
-    fwrite(buffer, 1, 9, new);
+    unsigned int b_init = removal->arquivo.posicao;
+    unsigned int b_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
 
-    int a, tam;
+    int rt = remove_bytes(arquivador, b_init, b_final);
+    if (rt) {
+        return 1;
+    }
 
-    tam = tamanho(new);
-
-    a = remove_bytes(new, 1, 2);
-
-    printf("tamanho: %d\n", tam);
-    if (a == 0)
-        printf("sucesso\n");
-    else
-        printf("erro\n");
-
-    fclose(new);
     return 0;
+}
+
+int main()
+{
+
+    FILE *arquivador = fopen("backup.vpp", "wb+");
+    if (arquivador == NULL)
+    {
+        printf("Erro ao abrir o arquivo de arquivador\n");
+        return 1;
+    }
+
+    dir_t diretorio;
+    diretorio.qntd = 0;
+    diretorio.head = NULL;
+    diretorio.ult = NULL;
+
+    diretorio = cria_teste(arquivador, diretorio);
+
+    const char *nomeMembro = "a.txt";
+    int resultado = remove_member(nomeMembro, &diretorio, arquivador);
+
+    if (resultado == 0) {
+        printf("Membro removido com sucesso!\n");
+    } else {
+        printf("Erro ao remover o membro.\n");
+    }
+    
+    liberarDiretorio(&diretorio);
 }
