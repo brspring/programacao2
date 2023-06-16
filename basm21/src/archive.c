@@ -67,6 +67,14 @@ int tamanho(FILE *archive)
     return f_data.st_size;
 }
 
+int tamanho2(FILE *arch)
+{
+    fseek(arch, 0, SEEK_END);
+    int tam = ftell(arch);
+    rewind(arch);
+    return tam;
+}
+
 long long calcula_offset(FILE *arquivador, dir_t diretorio)
 {
     long long offset = 0;
@@ -136,13 +144,16 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
     unsigned int write = b_init - 1;
     unsigned int rt;
 
-    if (b_init > b_final) return 1;
-	if (b_final > tam) return 2;
+    if (b_init > b_final)
+        return 1;
+    if (b_final > tam)
+        return 2;
 
-    if (b_init <= 0){
+    if (b_init <= 0)
+    {
         perror("insira um valor maior que zero\n");
         return 1;
-    } 
+    }
 
     if (read == tam)
     {
@@ -190,22 +201,23 @@ int main()
       liberarDiretorio(&diretorio);*/
 
     FILE *new = fopen("test.txt", "wb+");
-    if (new == NULL) {
+    if (new == NULL)
+    {
         perror("Erro ao abrir o arquivo");
         return 1;
     }
 
-    char buffer[9] = {'z', 'z', 'z', 'z', 'a', 'a', 'a', 'a', 'a'};
-    fwrite(buffer, 9, 1, new);
-    
+    char buffer[9] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'};
+    fwrite(buffer, 1, 9, new);
+
     int a, tam;
-    
+
     tam = tamanho(new);
 
     a = remove_bytes(new, 1, 2);
 
-    //printf("tamanho: %d\n", tam);
-    if (a = 0)
+    printf("tamanho: %d\n", tam);
+    if (a == 0)
         printf("sucesso\n");
     else
         printf("erro\n");
