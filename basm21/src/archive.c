@@ -9,6 +9,8 @@
 #include <time.h>
 #include "archive.h"
 
+#define MAX_SIZE 1024
+
 void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo)
 {
     nodo_t *novoNodo = malloc(sizeof(nodo_t));
@@ -79,59 +81,11 @@ long long calcula_offset(FILE *arquivador, dir_t diretorio)
     return offset;
 }
 
-dir_t cria_teste(FILE *arquivador, dir_t diretorio)
-{
-
-    FileInfo_t arquivo1;
-    strcpy(arquivo1.nome, "a.txt");
-    arquivo1.tam_inic = 8;
-    arquivo1.tam = 8;
-    arquivo1.st_dev = 0;
-    arquivo1.permissoes = 777;
-    arquivo1.ult_modif = time(NULL);
-    arquivo1.UserID = getuid();
-    arquivo1.GroupID = getgid();
-
-    FileInfo_t arquivo2;
-    strcpy(arquivo2.nome, "b.txt");
-    arquivo2.posicao = 0;
-    arquivo2.tam_inic = 4;
-    arquivo2.tam = 4;
-    arquivo2.st_dev = 0;
-    arquivo2.permissoes = 777;
-    arquivo2.ult_modif = time(NULL);
-    arquivo2.UserID = getuid();
-    arquivo2.GroupID = getgid();
-
-    adicionarArquivo(&diretorio, &arquivo1);
-    adicionarArquivo(&diretorio, &arquivo2);
-
-    long long offset = calcula_offset(arquivador, diretorio);
-
-    fwrite(&offset, sizeof(long long), 1, arquivador);
-
-    char buffer[8];
-
-    memset(buffer, 'a', 8);
-    fwrite(buffer, sizeof(char), 8, arquivador);
-
-    memset(buffer, 'b', 4);
-    fwrite(buffer, sizeof(char), 4, arquivador);
-
-    fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
-    fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
-
-    printf("tamanho do offset: %lld\n", offset);
-    rewind(arquivador);
-    fclose(arquivador);
-
-    return diretorio;
-}
-
 int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_final)
 {
     char *buffer[1024];
     unsigned int tam = tamanho(arch);
+    printf("tam na funcao remove bytes: %d\n", tam);
     unsigned int read = b_final;
     unsigned int write = b_init - 1;
     unsigned int rt;
@@ -173,15 +127,17 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
 
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador) {
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
-
-    if (removal == NULL) {
+    unsigned int b_init, b_final, rt;
+    if (removal == 0) {
         return 1;
     }
 
-    unsigned int b_init = removal->arquivo.posicao;
-    unsigned int b_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
+    b_init = removal->arquivo.posicao;
+    b_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
 
-    int rt = remove_bytes(arquivador, b_init, b_final);
+    rt = remove_bytes(arquivador, b_init, b_final);
+    
+    printf("rt: %d\n", rt);
     if (rt) {
         return 1;
     }
@@ -193,20 +149,63 @@ int main()
 {
 
     FILE *arquivador = fopen("backup.vpp", "wb+");
+    struct stat f_data;
+
     if (arquivador == NULL)
     {
         printf("Erro ao abrir o arquivo de arquivador\n");
         return 1;
     }
 
+    /*---------------------------------TESTE------------------------------------*/
     dir_t diretorio;
     diretorio.qntd = 0;
     diretorio.head = NULL;
     diretorio.ult = NULL;
 
-    diretorio = cria_teste(arquivador, diretorio);
+    FileInfo_t arquivo1;
+    strcpy(arquivo1.nome, "a.txt");
+    arquivo1.posicao = sizeof(long long) + 1;
+    arquivo1.tam_inic = 8;
+    arquivo1.tam = 8;
+    arquivo1.st_dev = 0;
+    arquivo1.permissoes = 777;
+    arquivo1.ult_modif = time(NULL);
+    arquivo1.UserID = getuid();
+    arquivo1.GroupID = getgid();
+
+    FileInfo_t arquivo2;
+    strcpy(arquivo2.nome, "b.txt");
+    arquivo2.posicao = sizeof(long long) + arquivo1.tam + 1;
+    arquivo2.tam_inic = 4;
+    arquivo2.tam = 4;
+    arquivo2.st_dev = 0;
+    arquivo2.permissoes = 777;
+    arquivo2.ult_modif = time(NULL);
+    arquivo2.UserID = getuid();
+    arquivo2.GroupID = getgid();
+
+    adicionarArquivo(&diretorio, &arquivo1);
+    adicionarArquivo(&diretorio, &arquivo2);
+
+    long long offset = calcula_offset(arquivador, diretorio);
+
+    fwrite(&offset, sizeof(long long), 1, arquivador);
+
+    char buffer[8];
+
+    memset(buffer, 'a', 8);
+    fwrite(buffer, sizeof(char), 8, arquivador);
+
+    memset(buffer, 'b', 4);
+    fwrite(buffer, sizeof(char), 4, arquivador);
+
+    fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
+    fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);   
+    /*-------------------------------------------------------------------*/
 
     const char *nomeMembro = "a.txt";
+    int tamantigo = tamanho(arquivador);
     int resultado = remove_member(nomeMembro, &diretorio, arquivador);
 
     if (resultado == 0) {
