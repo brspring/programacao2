@@ -33,18 +33,21 @@ void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo)
 
 void print_lista(dir_t *diretorio)
 {
-    printf("Lista de arquivos:\n");
+    printf("|-------------------|\n");
+    printf("v Lista de arquivos v\n");
+    printf("--------------------\n");
     nodo_t *atual = diretorio->head;
     while (atual != NULL)
     {
         printf("Nome: %s\n", atual->arquivo.nome);
         printf("Posição: %u\n", atual->arquivo.posicao);
+        printf("Índice: %u\n", atual->arquivo.indice);
         printf("Tamanho: %lu\n", atual->arquivo.tam);
         printf("Permissões: %o\n", atual->arquivo.permissoes);
         printf("Última modificação: %ld\n", atual->arquivo.ult_modif);
         printf("UserID: %d\n", atual->arquivo.UserID);
         printf("GroupID: %d\n", atual->arquivo.GroupID);
-        printf("----------------------\n");
+        printf("--------------------\n");
         atual = atual->prox;
     }
 }
@@ -141,7 +144,6 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
 {
     char *buffer[1024];
     unsigned int tam = tamanho(arch);
-    printf("tam na funcao remove bytes: %d\n", tam);
     unsigned int read = b_final;
     unsigned int write = b_init - 1;
     unsigned int rt;
@@ -184,23 +186,53 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 {
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
-    unsigned int b_init, b_final, rt;
+    unsigned int b_arq_init, b_arq_final, rt, rt2, b_metadados_init, b_metadados_tam, b_metadados_final;
+    int indice;
+    long long offset;
+
     if (removal == NULL)
     {
         return 1;
     }
+    
+    indice = removal->arquivo.indice; 
 
-    b_init = removal->arquivo.posicao;
-    b_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
+    /*calculo os valores para remover o conteudo do membro*/
+    b_arq_init = removal->arquivo.posicao;
+    b_arq_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
 
-    rt = remove_bytes(arquivador, b_init, b_final);
-    printf("rt: %d\n", rt);
+    /*calcula o offset antes de tudo para remover os metadados da forma certa*/
+    offset = calcula_offset(arquivador, *diretorio);
+
+    /*calcula os valores para remover os metadados do membro*/
+    b_metadados_tam = sizeof(FileInfo_t);
+    b_metadados_init = sizeof(long long) + offset + 1 + (indice * b_metadados_tam);
+    b_metadados_final = b_metadados_init + b_metadados_tam - 1;
+    printf("----------bytes------------\n");
+    printf("b_arq_init: %d\n", b_arq_init);
+    printf("b_arq_final: %d\n", b_arq_final);
+    printf("b_metadados_init: %d\n", b_metadados_init);
+    printf("b_metadados_final: %d\n", b_metadados_final);
+    printf("b_metadados_tam: %d\n", b_metadados_tam);
+    printf("---------------------------\n");
+
+    /*remove os bytes dos metadados do membro*/
+    rt2 = remove_bytes(arquivador, b_metadados_init, b_metadados_final);
+    if (rt2)
+    {
+        return 3;
+    }
+
+    /*remove o conteudo do membro*/
+    rt = remove_bytes(arquivador, b_arq_init, b_arq_final);
+    //printf("rt: %d\n", rt);
     if (rt)
     {
         return 1;
     }
 
     removerNo(diretorio, removal);
+
     return 0;
 }
 
@@ -225,7 +257,7 @@ int main()
     FileInfo_t arquivo1;
     strcpy(arquivo1.nome, "a.txt");
     arquivo1.posicao = sizeof(long long) + 1;
-    arquivo1.indice = 1;
+    arquivo1.indice = 0;
     arquivo1.tam_inic = 8;
     arquivo1.tam = 8;
     arquivo1.st_dev = 0;
@@ -237,7 +269,7 @@ int main()
     FileInfo_t arquivo2;
     strcpy(arquivo2.nome, "b.txt");
     arquivo2.posicao = sizeof(long long) + arquivo1.tam + 1;
-    arquivo2.indice = 2;
+    arquivo2.indice = 1;
     arquivo2.tam_inic = 4;
     arquivo2.tam = 4;
     arquivo2.st_dev = 0;
@@ -250,6 +282,7 @@ int main()
     adiciona_arq_lista(&diretorio, &arquivo2);
 
     long long offset = calcula_offset(arquivador, diretorio);
+    printf("offset: %lld\n", offset);
 
     fwrite(&offset, sizeof(long long), 1, arquivador);
 
@@ -278,7 +311,17 @@ int main()
     {
         printf("Erro ao remover o membro.\n");
     }
-    int tamanhoNovo = tamanho(arquivador);
+
     print_lista(&diretorio);
+
+    /*escreve o novo valor do offset no arquivador*/
+    long long offset2 = calcula_offset(arquivador, diretorio);
+    rewind(arquivador);
+    fwrite(&offset2, sizeof(long long), 1, arquivador);
+    
+    /*novo tamanho do arquivo em bytes*/
+    int tamanhoNovo = tamanho(arquivador);
+    printf("tamanhoNovo: %d\n", tamanhoNovo);
+
     liberarDiretorio(&diretorio);
 }
