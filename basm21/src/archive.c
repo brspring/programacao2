@@ -64,6 +64,39 @@ void liberarDiretorio(dir_t *diretorio)
     diretorio->qntd = 0;
 }
 
+void removerNo(dir_t *diretorio, nodo_t *no)
+{
+    // Atualiza o ponteiro diretorio->ult se o nó removido for o último nó
+    if (no == diretorio->ult)
+    {
+        nodo_t *atual = diretorio->head;
+        while (atual->prox != diretorio->ult)
+        {
+            atual = atual->prox;
+        }
+        diretorio->ult = atual;
+    }
+
+    // Remover o nó correspondente do diretório
+    nodo_t *atual = diretorio->head;
+    if (atual == no)
+    {
+        diretorio->head = atual->prox;
+    }
+    else
+    {
+        while (atual->prox != no)
+        {
+            atual = atual->prox;
+        }
+        atual->prox = no->prox;
+    }
+
+    diretorio->qntd--;
+
+    free(no);
+}
+
 nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome)
 {
     nodo_t *atual = diretorio->head;
@@ -162,38 +195,15 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
         return 1;
     }
 
-    // Atualiza o ponteiro diretorio->ult se o nó removido for o último nó
-    if (removal == diretorio->ult)
-    {
-        nodo_t *atual = diretorio->head;
-        while (atual->prox != diretorio->ult)
-        {
-            atual = atual->prox;
-        }
-        diretorio->ult = atual;
-    }
-
-    // Remover o nó correspondente do diretório
-    nodo_t *atual = diretorio->head;
-    if (atual == removal)
-    {
-        diretorio->head = atual->prox;
-    }
-    else
-    {
-        while (atual->prox != removal)
-        {
-            atual = atual->prox;
-        }
-        atual->prox = removal->prox;
-    }
-
-    diretorio->qntd--;
-
-    free(removal);
-
+    removerNo(diretorio, removal);
     return 0;
 }
+
+void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador)
+{
+    fwrite(&arquivo, sizeof(FileInfo_t), 1, arquivador);
+}
+
 
 int main()
 {
@@ -216,6 +226,7 @@ int main()
     FileInfo_t arquivo1;
     strcpy(arquivo1.nome, "a.txt");
     arquivo1.posicao = sizeof(long long) + 1;
+    arquivo1.indice = 1;
     arquivo1.tam_inic = 8;
     arquivo1.tam = 8;
     arquivo1.st_dev = 0;
@@ -227,6 +238,7 @@ int main()
     FileInfo_t arquivo2;
     strcpy(arquivo2.nome, "b.txt");
     arquivo2.posicao = sizeof(long long) + arquivo1.tam + 1;
+    arquivo2.indice = 2;
     arquivo2.tam_inic = 4;
     arquivo2.tam = 4;
     arquivo2.st_dev = 0;
@@ -250,11 +262,11 @@ int main()
     memset(buffer, 'b', 4);
     fwrite(buffer, sizeof(char), 4, arquivador);
 
-    fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
-    fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
+    adiciona_metadados(arquivo1, arquivador);
+    adiciona_metadados(arquivo2, arquivador);
     /*-------------------------------------------------------------------*/
 
-    const char *nomeMembro = "b.txt";
+    const char *nomeMembro = "a.txt";
     int tamantigo = tamanho(arquivador);
     printf("tamantigo: %d\n", tamantigo);
     int resultado = remove_member(nomeMembro, &diretorio, arquivador);
@@ -268,8 +280,6 @@ int main()
         printf("Erro ao remover o membro.\n");
     }
     int tamanhoNovo = tamanho(arquivador);
-
     print_lista(&diretorio);
-
     liberarDiretorio(&diretorio);
 }
