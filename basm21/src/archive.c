@@ -111,6 +111,11 @@ nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome)
     return NULL;
 }
 
+void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador)
+{
+    fwrite(&arquivo, sizeof(FileInfo_t), 1, arquivador);
+}
+
 int tamanho(FILE *archive)
 {
     rewind(archive);
@@ -198,12 +203,6 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     removerNo(diretorio, removal);
     return 0;
 }
-
-void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador)
-{
-    fwrite(&arquivo, sizeof(FileInfo_t), 1, arquivador);
-}
-
 
 int main()
 {

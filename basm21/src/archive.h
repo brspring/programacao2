@@ -11,6 +11,7 @@ typedef struct FileInfo
     char nome[256];
     char path[1024];
     int posicao;
+    int indice;
     size_t tam_inic;
     size_t tam;
 
@@ -39,15 +40,23 @@ typedef struct dir
 
 void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo);
 
+void print_lista(dir_t *diretorio);
+
 void liberarDiretorio(dir_t *diretorio);
 
-long long calcula_offset(FILE *arquivador, dir_t diretorio);
+void removerNo(dir_t *diretorio, nodo_t *no);
+
+nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
+
+void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador);
 
 int tamanho(FILE *archive);
 
+long long calcula_offset(FILE *arquivador, dir_t diretorio);
+
 int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_final);
 
-nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
+int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
 
 #endif
 
