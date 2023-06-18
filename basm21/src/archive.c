@@ -196,7 +196,6 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     }
     
     indice = removal->arquivo.indice; 
-
     /*calculo os valores para remover o conteudo do membro*/
     b_arq_init = removal->arquivo.posicao;
     b_arq_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
