@@ -37,7 +37,7 @@ typedef struct dir
     nodo_t *ult;
 } dir_t;
 
-void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo);
+void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo);
 
 void liberarDiretorio(dir_t *diretorio);
 

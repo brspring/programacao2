@@ -11,7 +11,7 @@
 
 #define MAX_SIZE 1024
 
-void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo)
+void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo)
 {
     nodo_t *novoNodo = malloc(sizeof(nodo_t));
     novoNodo->arquivo = *arquivo;
@@ -29,6 +29,24 @@ void adicionarArquivo(dir_t *diretorio, FileInfo_t *arquivo)
     }
 
     diretorio->qntd++;
+}
+
+void print_lista(dir_t *diretorio)
+{
+    printf("Lista de arquivos:\n");
+    nodo_t *atual = diretorio->head;
+    while (atual != NULL)
+    {
+        printf("Nome: %s\n", atual->arquivo.nome);
+        printf("Posição: %u\n", atual->arquivo.posicao);
+        printf("Tamanho: %lu\n", atual->arquivo.tam);
+        printf("Permissões: %o\n", atual->arquivo.permissoes);
+        printf("Última modificação: %ld\n", atual->arquivo.ult_modif);
+        printf("UserID: %d\n", atual->arquivo.UserID);
+        printf("GroupID: %d\n", atual->arquivo.GroupID);
+        printf("----------------------\n");
+        atual = atual->prox;
+    }
 }
 
 void liberarDiretorio(dir_t *diretorio)
@@ -125,10 +143,12 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
     return 0;
 }
 
-int remove_member(const char *name, dir_t *diretorio, FILE *arquivador) {
+int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
+{
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
     unsigned int b_init, b_final, rt;
-    if (removal == 0) {
+    if (removal == NULL)
+    {
         return 1;
     }
 
@@ -136,11 +156,41 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador) {
     b_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
 
     rt = remove_bytes(arquivador, b_init, b_final);
-    
     printf("rt: %d\n", rt);
-    if (rt) {
+    if (rt)
+    {
         return 1;
     }
+
+    // Atualiza o ponteiro diretorio->ult se o nó removido for o último nó
+    if (removal == diretorio->ult)
+    {
+        nodo_t *atual = diretorio->head;
+        while (atual->prox != diretorio->ult)
+        {
+            atual = atual->prox;
+        }
+        diretorio->ult = atual;
+    }
+
+    // Remover o nó correspondente do diretório
+    nodo_t *atual = diretorio->head;
+    if (atual == removal)
+    {
+        diretorio->head = atual->prox;
+    }
+    else
+    {
+        while (atual->prox != removal)
+        {
+            atual = atual->prox;
+        }
+        atual->prox = removal->prox;
+    }
+
+    diretorio->qntd--;
+
+    free(removal);
 
     return 0;
 }
@@ -185,8 +235,8 @@ int main()
     arquivo2.UserID = getuid();
     arquivo2.GroupID = getgid();
 
-    adicionarArquivo(&diretorio, &arquivo1);
-    adicionarArquivo(&diretorio, &arquivo2);
+    adiciona_arq_lista(&diretorio, &arquivo1);
+    adiciona_arq_lista(&diretorio, &arquivo2);
 
     long long offset = calcula_offset(arquivador, diretorio);
 
@@ -201,18 +251,25 @@ int main()
     fwrite(buffer, sizeof(char), 4, arquivador);
 
     fwrite(&arquivo1, sizeof(FileInfo_t), 1, arquivador);
-    fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);   
+    fwrite(&arquivo2, sizeof(FileInfo_t), 1, arquivador);
     /*-------------------------------------------------------------------*/
 
-    const char *nomeMembro = "a.txt";
+    const char *nomeMembro = "b.txt";
     int tamantigo = tamanho(arquivador);
+    printf("tamantigo: %d\n", tamantigo);
     int resultado = remove_member(nomeMembro, &diretorio, arquivador);
 
-    if (resultado == 0) {
+    if (resultado == 0)
+    {
         printf("Membro removido com sucesso!\n");
-    } else {
+    }
+    else
+    {
         printf("Erro ao remover o membro.\n");
     }
-    
+    int tamanhoNovo = tamanho(arquivador);
+
+    print_lista(&diretorio);
+
     liberarDiretorio(&diretorio);
 }
