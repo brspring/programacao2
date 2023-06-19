@@ -150,6 +150,23 @@ long long calcula_offset(FILE *arquivador, dir_t diretorio)
     return offset;
 }
 
+int acrescenta_bytes_fim_arq(FILE *arch, const char *buffer, const unsigned int tam_bytes)
+{
+    unsigned int rt;
+
+    if (tam_bytes <= 0)
+        return 1;
+
+    fseek(arch, 0, SEEK_END);
+    rt = fwrite(buffer, 1, tam_bytes, arch);
+
+    if (tam_bytes != rt)
+        return 2;
+
+    rewind(arch);
+    return 0;
+}
+
 int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_final)
 {
     char *buffer[1024];
@@ -245,40 +262,31 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     return 0;
 }
 
-int copia_bytes(FILE* arch, const unsigned int b_init, const unsigned int b_final, FILE* arch_copia) {
-    char buffer[1024];
+int copia_bytes(FILE *arch, char *buffer, const unsigned int b_init, const unsigned int b_final)
+{
     unsigned int tam = tamanho(arch);
-    unsigned int read = b_init - 1;
-    unsigned int write = 0;
     unsigned int rt;
-    
+
     if (b_init > b_final)
         return 1;
     if (b_final > tam)
         return 2;
-    
-    if (b_init <= 0) {
+
+    if (b_init < 1)
+    {
         perror("insira um valor maior que zero\n");
-        return 1;
+        return 3;
     }
-    
-    while (read < b_final) {
-        fseek(arch, read, SEEK_SET);
-        
-        if (b_final - read > sizeof(buffer)) {
-            rt = fread(buffer, 1, sizeof(buffer), arch);
-        } else {
-            rt = fread(buffer, 1, b_final - read, arch);
-        }
-        
-        fseek(arch_copia, write, SEEK_SET);
-        fwrite(buffer, 1, rt, arch_copia);
-        
-        read += rt;
-        write += rt;
+
+    fseek(arch, b_init - 1, SEEK_SET);
+    rt = fread(buffer, 1, b_final - b_init + 1, arch);
+
+    if (rt != b_final - b_init + 1)
+    {
+        return 4;
     }
-    
-    rewind(arch_copia);
+
+    rewind(arch);
     return 0;
 }
 
@@ -362,7 +370,7 @@ int main()
     printa_metadados_lista(&diretorio, arquivador);
     /*-------------------------------------------------------------------*/
     printf("offset: %lld\n", offset);
-    FILE* arquivo_copia = fopen("arquivo_copia.txt", "wb");
+    FILE *arquivo_copia = fopen("arquivo_copia.txt", "wb");
 
     copia_bytes(arquivador, 9, 16, arquivo_copia);
 

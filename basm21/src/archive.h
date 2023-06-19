@@ -60,6 +60,7 @@ int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_fin
 
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
 
+int acrescenta_bytes_fim_arq(FILE *arch, const char *buffer, const unsigned int tam_bytes);
 #endif
 
 /*
