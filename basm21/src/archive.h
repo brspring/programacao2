@@ -50,6 +50,8 @@ nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
 
 void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador);
 
+void printa_metadados_lista(dir_t *diretorio, FILE *arquivador);
+
 int tamanho(FILE *archive);
 
 long long calcula_offset(FILE *arquivador, dir_t diretorio);
