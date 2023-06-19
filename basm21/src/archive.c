@@ -9,7 +9,7 @@
 #include <time.h>
 #include "archive.h"
 
-#define MAX_SIZE 1024
+#define MAX_SIZE 2014
 
 void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo)
 {
@@ -245,6 +245,43 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     return 0;
 }
 
+int copia_bytes(FILE* arch, const unsigned int b_init, const unsigned int b_final, FILE* arch_copia) {
+    char buffer[1024];
+    unsigned int tam = tamanho(arch);
+    unsigned int read = b_init - 1;
+    unsigned int write = 0;
+    unsigned int rt;
+    
+    if (b_init > b_final)
+        return 1;
+    if (b_final > tam)
+        return 2;
+    
+    if (b_init <= 0) {
+        perror("insira um valor maior que zero\n");
+        return 1;
+    }
+    
+    while (read < b_final) {
+        fseek(arch, read, SEEK_SET);
+        
+        if (b_final - read > sizeof(buffer)) {
+            rt = fread(buffer, 1, sizeof(buffer), arch);
+        } else {
+            rt = fread(buffer, 1, b_final - read, arch);
+        }
+        
+        fseek(arch_copia, write, SEEK_SET);
+        fwrite(buffer, 1, rt, arch_copia);
+        
+        read += rt;
+        write += rt;
+    }
+    
+    rewind(arch_copia);
+    return 0;
+}
+
 int main()
 {
 
@@ -254,7 +291,7 @@ int main()
     printf("offset: %lld\n", offset);
     if (arquivador == NULL)
     {
-        printf("Erro ao abrir o arquivo de arquivador\n");
+        perror("Erro ao abrir o arquivo de arquivador\n");
         return 1;
     }
 
@@ -266,7 +303,7 @@ int main()
 
     FileInfo_t arquivo1;
     strcpy(arquivo1.nome, "a.txt");
-    arquivo1.posicao = sizeof(long long) + offset  + 1;
+    arquivo1.posicao = sizeof(long long) + offset + 1;
     arquivo1.indice = 0;
     arquivo1.tam_inic = 8;
     arquivo1.tam = 8;
@@ -324,32 +361,14 @@ int main()
 
     printa_metadados_lista(&diretorio, arquivador);
     /*-------------------------------------------------------------------*/
+    printf("offset: %lld\n", offset);
+    FILE* arquivo_copia = fopen("arquivo_copia.txt", "wb");
 
-    const char *nomeMembro = "c.txt";
-    int tamantigo = tamanho(arquivador);
-    printf("tamantigo: %d\n", tamantigo);
-    int resultado = remove_member(nomeMembro, &diretorio, arquivador);
-
-    if (resultado == 0)
-    {
-        printf("Membro removido com sucesso!\n");
-    }
-    else
-    {
-        printf("resultado = %d\n", resultado);
-        printf("Erro ao remover o membro.\n");
-    }
+    copia_bytes(arquivador, 9, 16, arquivo_copia);
 
     print_lista(&diretorio);
 
-    /*escreve o novo valor do offset no arquivador*/
-    long long offset2 = calcula_offset(arquivador, diretorio);
-    rewind(arquivador);
-    fwrite(&offset2, sizeof(long long), 1, arquivador);
-
-    /*novo tamanho do arquivo em bytes*/
-    int tamanhoNovo = tamanho(arquivador);
-    printf("tamanhoNovo: %d\n", tamanhoNovo);
-
+    fclose(arquivo_copia);
+    fclose(arquivador);
     liberarDiretorio(&diretorio);
 }

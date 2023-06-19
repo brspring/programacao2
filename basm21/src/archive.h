@@ -104,3 +104,33 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
 
     fclose(new);
     return 0;*/
+
+
+ /*
+    
+    TESTE DA FUNCAO DE REMOVER MEMBRO
+
+    const char *nomeMembro = "d.txt";
+    int tamantigo = tamanho(arquivador);
+    printf("tamantigo: %d\n", tamantigo);
+    int resultado = remove_member(nomeMembro, &diretorio, arquivador);
+
+    if (resultado == 0)
+    {
+        printf("Membro removido com sucesso!\n");
+    }
+    else
+    {
+        printf("Erro ao remover o membro.\n");
+    }
+
+    //escreve o novo valor do offset no arquivador
+    long long offset2 = calcula_offset(arquivador, diretorio);
+    rewind(arquivador);
+    fwrite(&offset2, sizeof(long long), 1, arquivador);
+
+    //novo tamanho do arquivo em bytes
+    int tamanhoNovo = tamanho(arquivador);
+    printf("tamanhoNovo: %d\n", tamanhoNovo);
+    
+*/
