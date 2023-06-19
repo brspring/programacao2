@@ -271,25 +271,52 @@ int copia_bytes(FILE *arch, char *buffer, const unsigned int b_init, const unsig
         return 1;
     if (b_final > tam)
         return 2;
-
     if (b_init < 1)
-    {
-        perror("insira um valor maior que zero\n");
         return 3;
-    }
 
     fseek(arch, b_init - 1, SEEK_SET);
     rt = fread(buffer, 1, b_final - b_init + 1, arch);
 
     if (rt != b_final - b_init + 1)
-    {
         return 4;
-    }
-
+    
     rewind(arch);
     return 0;
 }
 
+int move(FILE* arch, const unsigned int b_init, const unsigned int b_final, const unsigned int b_destino)
+{
+    char buffer[1024];
+    unsigned int tam = tamanho(arch);
+    unsigned int rt;
+    unsigned int block, read, write;
+
+    if (b_init > b_final)
+        return 1;
+    if (b_final > tam)
+        return 2;
+    if (b_init < 1)
+        return 3;
+    
+    block = b_final - b_init + 1;
+    read = b_init - 1;
+    write =  tam;
+
+    while (block > 0){
+        fseek(arch, read, SEEK_SET);
+
+        if (block > 1024)
+            rt = fread(buffer, 1, 1024, arch);
+        else 
+            rt = fread(buffer, 1, block, arch);
+        fseek(arch, 0, SEEK_END);
+        fwrite(buffer, 1, rt, arch);
+        read += rt;
+        block -= rt;
+    }
+
+    return 0;
+}
 int main()
 {
 

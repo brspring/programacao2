@@ -56,11 +56,14 @@ int tamanho(FILE *archive);
 
 long long calcula_offset(FILE *arquivador, dir_t diretorio);
 
+int acrescenta_bytes_fim_arq(FILE *arch, const char *buffer, const unsigned int tam_bytes);
+
 int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_final);
 
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
 
-int acrescenta_bytes_fim_arq(FILE *arch, const char *buffer, const unsigned int tam_bytes);
+int copia_bytes(FILE *arch, char *buffer, const unsigned int b_init, const unsigned int b_final);
+
 #endif
 
 /*
