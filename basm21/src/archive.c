@@ -288,6 +288,7 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
 {
     char buffer[1024];
     unsigned int tam = tamanho(arch);
+    printf("tam: %d\n", tam);
     unsigned int rt;
     unsigned int block, read, write;
 
@@ -301,8 +302,8 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
     block = b_final - b_init + 1;
     read = b_init - 1;
     write = b_final;
-
-    /*escreve no fim do arq o block*/
+    
+    /*escreve no fim o block*/
     while (block > 0)
     {
         fseek(arch, read, SEEK_SET);
@@ -311,13 +312,14 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
             rt = fread(buffer, 1, 1024, arch);
         else
             rt = fread(buffer, 1, block, arch);
+
         fseek(arch, 0, SEEK_END);
         fwrite(buffer, 1, rt, arch);
         read += rt;
         block -= rt;
     }
 
-    /*abre um espaço com o tamanho de block dps do destino*/
+    /*abre um espaço com o tamanho de block*/
     if (b_destino < b_init)
     {
         block = b_init - b_destino;
@@ -343,6 +345,33 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
         }
     }
 
+    /*escreve o block no destino*/
+    tam = tamanho(arch);
+    block = b_final - b_init + 1;
+    read = tam - block;
+    write = b_destino - 1; 
+
+    while (block > 0)
+    {
+        if (block > 1024)
+        {
+            fseek(arch, read, SEEK_SET);
+            rt = fread(buffer, 1, 1024, arch);
+        }
+        else
+        {
+            fseek(arch, read, SEEK_SET);
+            rt = fread(buffer, 1, block, arch);
+        }
+
+        fseek(arch, write, SEEK_SET);
+        fwrite(buffer, 1, rt, arch);
+        block -= rt;
+        read -= rt;
+        write -= rt;
+    }
+
+    ftruncate(fileno(arch), tam - (b_final - b_init + 1));
     return 0;
 }
 
