@@ -301,7 +301,7 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
     block = b_final - b_init + 1;
     read = b_init - 1;
     write = b_final;
-
+    
     while (block > 0)
     {
         fseek(arch, read, SEEK_SET);
@@ -339,9 +339,9 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
             read -= rt;
             write -= rt;
         }
-
-        return 0;
     }
+
+    return 0;
 }
 
     int main()
