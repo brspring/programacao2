@@ -302,7 +302,7 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
     block = b_final - b_init + 1;
     read = b_init - 1;
     write = b_final;
-    
+
     /*escreve no fim o block*/
     while (block > 0)
     {
@@ -319,7 +319,7 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
         block -= rt;
     }
 
-    /*abre um espaço com o tamanho de block*/
+    /*abre um espaço com o tamanho de block para tras do destino*/
     if (b_destino < b_init)
     {
         block = b_init - b_destino;
@@ -345,123 +345,67 @@ int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, cons
         }
     }
 
+    /*abre um espaço com o  tamanho de block para frente do destino*/
+    if (b_destino > b_final)
+    {
+        block = b_destino - b_init;
+        read = b_final;
+        write = b_init - 1;
+
+        while (block > 0)
+        {
+            if (block >= 1024)
+            {
+                fseek(arch, read, SEEK_SET);
+                rt = fread(buffer, 1, 1024, arch);
+            }
+            else
+            {
+                fseek(arch, read, SEEK_SET);
+                rt = fread(buffer, 1, block, arch);
+            }
+            fseek(arch, write, SEEK_SET);
+            fwrite(buffer, 1, rt, arch);
+            read += rt;
+            write += rt;
+            block -= rt;
+        }
+    }
+
     /*escreve o block no destino*/
-    tam = tamanho(arch);
-    block = b_final - b_init + 1;
-    read = tam - block;
-    write = b_destino - 1; 
+    block = b_final - b_init + 1; 
+    read =  tam;
+    write = b_destino - 1;
 
     while (block > 0)
     {
-        if (block > 1024)
+        fseek(arch, read, SEEK_SET);
+        if (block >= 1024)
         {
-            fseek(arch, read, SEEK_SET);
             rt = fread(buffer, 1, 1024, arch);
         }
         else
         {
-            fseek(arch, read, SEEK_SET);
             rt = fread(buffer, 1, block, arch);
         }
 
-        fseek(arch, write, SEEK_SET);
+        printf("write: %d\n", write);
+        fseek(arch, write - block, SEEK_SET);
         fwrite(buffer, 1, rt, arch);
         block -= rt;
         read -= rt;
         write -= rt;
     }
-
-    ftruncate(fileno(arch), tam - (b_final - b_init + 1));
+    rewind(arch);
+    ftruncate(fileno(arch), tam);
     return 0;
 }
 
-    int main()
-    {
+int main()
+{
+    FILE *arquivo_copia = fopen("arquivo_copia.txt", "r+");
 
-        FILE *arquivador = fopen("backup.vpp", "wb+");
-        struct stat f_data;
-        long long offset = 0;
-        printf("offset: %lld\n", offset);
-        if (arquivador == NULL)
-        {
-            perror("Erro ao abrir o arquivo de arquivador\n");
-            return 1;
-        }
+    move(arquivo_copia, 6, 8, 15);
 
-        /*---------------------------------TESTE------------------------------------*/
-        dir_t diretorio;
-        diretorio.qntd = 0;
-        diretorio.head = NULL;
-        diretorio.ult = NULL;
-
-        FileInfo_t arquivo1;
-        strcpy(arquivo1.nome, "a.txt");
-        arquivo1.posicao = sizeof(long long) + offset + 1;
-        arquivo1.indice = 0;
-        arquivo1.tam_inic = 8;
-        arquivo1.tam = 8;
-        arquivo1.st_dev = 0;
-        arquivo1.permissoes = 777;
-        arquivo1.ult_modif = time(NULL);
-        arquivo1.UserID = getuid();
-        arquivo1.GroupID = getgid();
-
-        adiciona_arq_lista(&diretorio, &arquivo1);
-        offset = calcula_offset(arquivador, diretorio);
-
-        FileInfo_t arquivo2;
-        strcpy(arquivo2.nome, "b.txt");
-        arquivo2.posicao = sizeof(long long) + offset + 1;
-        arquivo2.indice = 1;
-        arquivo2.tam_inic = 4;
-        arquivo2.tam = 4;
-        arquivo2.st_dev = 0;
-        arquivo2.permissoes = 777;
-        arquivo2.ult_modif = time(NULL);
-        arquivo2.UserID = getuid();
-        arquivo2.GroupID = getgid();
-
-        adiciona_arq_lista(&diretorio, &arquivo2);
-        offset = calcula_offset(arquivador, diretorio);
-
-        FileInfo_t arquivo3;
-        strcpy(arquivo3.nome, "c.txt");
-        arquivo3.posicao = sizeof(long long) + offset + 1;
-        arquivo3.indice = 2;
-        arquivo3.tam_inic = 8;
-        arquivo3.tam = 8;
-        arquivo3.st_dev = 0;
-        arquivo3.permissoes = 777;
-        arquivo3.ult_modif = time(NULL);
-        arquivo3.UserID = getuid();
-        arquivo3.GroupID = getgid();
-
-        adiciona_arq_lista(&diretorio, &arquivo3);
-        offset = calcula_offset(arquivador, diretorio);
-
-        fwrite(&offset, sizeof(long long), 1, arquivador);
-
-        char buffer[8];
-
-        memset(buffer, 'a', 8);
-        fwrite(buffer, sizeof(char), 8, arquivador);
-
-        memset(buffer, 'b', 4);
-        fwrite(buffer, sizeof(char), 4, arquivador);
-
-        memset(buffer, 'c', 8);
-        fwrite(buffer, sizeof(char), 8, arquivador);
-
-        printa_metadados_lista(&diretorio, arquivador);
-        /*-------------------------------------------------------------------*/
-        printf("offset: %lld\n", offset);
-        FILE *arquivo_copia = fopen("arquivo_copia.txt", "wb");
-
-        copia_bytes(arquivador, 9, 16, arquivo_copia);
-
-        print_lista(&diretorio);
-
-        fclose(arquivo_copia);
-        fclose(arquivador);
-        liberarDiretorio(&diretorio);
-    }
+    fclose(arquivo_copia);
+}
