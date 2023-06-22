@@ -195,10 +195,92 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 }
 
 int main()
-{
-    FILE *arquivo_copia = fopen("arquivo_copia.txt", "r+");
+    {
 
-    move_bytes(arquivo_copia, 1, 3, 6);
+        FILE *arquivador = fopen("backup.vpp", "wb+");
+        struct stat f_data;
+        long long offset = 0;
+        printf("offset: %lld\n", offset);
+        if (arquivador == NULL)
+        {
+            perror("Erro ao abrir o arquivo de arquivador\n");
+            return 1;
+        }
 
-    fclose(arquivo_copia);
-}
+        /*---------------------------------TESTE------------------------------------*/
+        dir_t diretorio;
+        diretorio.qntd = 0;
+        diretorio.head = NULL;
+        diretorio.ult = NULL;
+
+        FileInfo_t arquivo1;
+        strcpy(arquivo1.nome, "a.txt");
+        arquivo1.posicao = sizeof(long long) + offset + 1;
+        arquivo1.indice = 0;
+        arquivo1.tam_inic = 8;
+        arquivo1.tam = 8;
+        arquivo1.st_dev = 0;
+        arquivo1.permissoes = 777;
+        arquivo1.ult_modif = time(NULL);
+        arquivo1.UserID = getuid();
+        arquivo1.GroupID = getgid();
+
+        adiciona_arq_lista(&diretorio, &arquivo1);
+        offset = calcula_offset(arquivador, diretorio);
+
+        FileInfo_t arquivo2;
+        strcpy(arquivo2.nome, "b.txt");
+        arquivo2.posicao = sizeof(long long) + offset + 1;
+        arquivo2.indice = 1;
+        arquivo2.tam_inic = 4;
+        arquivo2.tam = 4;
+        arquivo2.st_dev = 0;
+        arquivo2.permissoes = 777;
+        arquivo2.ult_modif = time(NULL);
+        arquivo2.UserID = getuid();
+        arquivo2.GroupID = getgid();
+
+        adiciona_arq_lista(&diretorio, &arquivo2);
+        offset = calcula_offset(arquivador, diretorio);
+
+        FileInfo_t arquivo3;
+        strcpy(arquivo3.nome, "c.txt");
+        arquivo3.posicao = sizeof(long long) + offset + 1;
+        arquivo3.indice = 2;
+        arquivo3.tam_inic = 8;
+        arquivo3.tam = 8;
+        arquivo3.st_dev = 0;
+        arquivo3.permissoes = 777;
+        arquivo3.ult_modif = time(NULL);
+        arquivo3.UserID = getuid();
+        arquivo3.GroupID = getgid();
+
+        adiciona_arq_lista(&diretorio, &arquivo3);
+        offset = calcula_offset(arquivador, diretorio);
+
+        fwrite(&offset, sizeof(long long), 1, arquivador);
+
+        char buffer[8];
+
+        memset(buffer, 'a', 8);
+        fwrite(buffer, sizeof(char), 8, arquivador);
+
+        memset(buffer, 'b', 4);
+        fwrite(buffer, sizeof(char), 4, arquivador);
+
+        memset(buffer, 'c', 8);
+        fwrite(buffer, sizeof(char), 8, arquivador);
+
+        printa_metadados_lista(&diretorio, arquivador);
+        /*-------------------------------------------------------------------*/
+        printf("offset: %lld\n", offset);
+        FILE *arquivo_copia = fopen("arquivo_copia.txt", "wb");
+
+        copia_bytes(arquivador, 9, 16, arquivo_copia);
+
+        print_lista(&diretorio);
+
+        fclose(arquivo_copia);
+        fclose(arquivador);
+        liberarDiretorio(&diretorio);
+    }
