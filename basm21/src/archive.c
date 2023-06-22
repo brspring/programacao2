@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <time.h>
 #include "archive.h"
+#include "archiver.h"
+
 
 #define MAX_SIZE 2014
 
@@ -129,15 +131,6 @@ void printa_metadados_lista(dir_t *diretorio, FILE *arquivador)
     }
 }
 
-int tamanho(FILE *archive)
-{
-    rewind(archive);
-    struct stat f_data;
-
-    fstat(fileno(archive), &f_data);
-    return f_data.st_size;
-}
-
 long long calcula_offset(FILE *arquivador, dir_t diretorio)
 {
     long long offset = 0;
@@ -148,66 +141,6 @@ long long calcula_offset(FILE *arquivador, dir_t diretorio)
         agr = agr->prox;
     }
     return offset;
-}
-
-int acrescenta_bytes_fim_arq(FILE *arch, const char *buffer, const unsigned int tam_bytes)
-{
-    unsigned int rt;
-
-    if (tam_bytes <= 0)
-        return 1;
-
-    fseek(arch, 0, SEEK_END);
-    rt = fwrite(buffer, 1, tam_bytes, arch);
-
-    if (tam_bytes != rt)
-        return 2;
-
-    rewind(arch);
-    return 0;
-}
-
-int remove_bytes(FILE *arch, const unsigned int b_init, const unsigned int b_final)
-{
-    char *buffer[1024];
-    unsigned int tam = tamanho(arch);
-    unsigned int read = b_final;
-    unsigned int write = b_init - 1;
-    unsigned int rt;
-
-    if (b_init > b_final)
-        return 1;
-    if (b_final > tam)
-        return 2;
-
-    if (b_init <= 0)
-    {
-        perror("insira um valor maior que zero\n");
-        return 1;
-    }
-
-    if (read == tam)
-    {
-        ftruncate(fileno(arch), b_init - 1);
-        return 0;
-    }
-
-    while (read < tam)
-    {
-        fseek(arch, read, SEEK_SET);
-        if (tam - read > 1024)
-            rt = fread(buffer, 1, 1024, arch);
-        else
-            rt = fread(buffer, 1, tam - read, arch);
-        fseek(arch, write, SEEK_SET);
-        fwrite(buffer, 1, rt, arch);
-        read += rt;
-        write += rt;
-    }
-
-    rewind(arch);
-    ftruncate(fileno(arch), tam - (b_final - b_init + 1));
-    return 0;
 }
 
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
@@ -251,7 +184,6 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 
     /*remove o conteudo do membro*/
     rt = remove_bytes(arquivador, b_arq_init, b_arq_final);
-    // printf("rt: %d\n", rt);
     if (rt)
     {
         return 1;
@@ -262,150 +194,11 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     return 0;
 }
 
-int copia_bytes(FILE *arch, char *buffer, const unsigned int b_init, const unsigned int b_final)
-{
-    unsigned int tam = tamanho(arch);
-    unsigned int rt;
-
-    if (b_init > b_final)
-        return 1;
-    if (b_final > tam)
-        return 2;
-    if (b_init < 1)
-        return 3;
-
-    fseek(arch, b_init - 1, SEEK_SET);
-    rt = fread(buffer, 1, b_final - b_init + 1, arch);
-
-    if (rt != b_final - b_init + 1)
-        return 4;
-
-    rewind(arch);
-    return 0;
-}
-
-int move(FILE *arch, const unsigned int b_init, const unsigned int b_final, const unsigned int b_destino)
-{
-    char buffer[1024];
-    unsigned int tam = tamanho(arch);
-    printf("tam: %d\n", tam);
-    unsigned int rt;
-    unsigned int block, read, write;
-
-    if (b_init > b_final)
-        return 1;
-    if (b_final > tam)
-        return 2;
-    if (b_init < 1)
-        return 3;
-
-    block = b_final - b_init + 1;
-    read = b_init - 1;
-    write = b_final;
-
-    /*escreve no fim o block*/
-    while (block > 0)
-    {
-        fseek(arch, read, SEEK_SET);
-
-        if (block > 1024)
-            rt = fread(buffer, 1, 1024, arch);
-        else
-            rt = fread(buffer, 1, block, arch);
-
-        fseek(arch, 0, SEEK_END);
-        fwrite(buffer, 1, rt, arch);
-        read += rt;
-        block -= rt;
-    }
-
-    /*abre um espaço com o tamanho de block para tras do destino*/
-    if (b_destino < b_init)
-    {
-        block = b_init - b_destino;
-        read = b_init - 1;
-        write = b_final;
-        while (block > 0)
-        {
-            if (block > 1024)
-            {
-                fseek(arch, read - 1024, SEEK_SET);
-                rt = fread(buffer, 1, 1024, arch);
-            }
-            else
-            {
-                fseek(arch, read - block, SEEK_SET);
-                rt = fread(buffer, 1, block, arch);
-            }
-            fseek(arch, write - rt, SEEK_SET);
-            fwrite(buffer, 1, rt, arch);
-            block -= rt;
-            read -= rt;
-            write -= rt;
-        }
-    }
-
-    /*abre um espaço com o  tamanho de block para frente do destino*/
-    if (b_destino > b_final)
-    {
-        block = b_destino - b_init;
-        read = b_final;
-        write = b_init - 1;
-
-        while (block > 0)
-        {
-            if (block >= 1024)
-            {
-                fseek(arch, read, SEEK_SET);
-                rt = fread(buffer, 1, 1024, arch);
-            }
-            else
-            {
-                fseek(arch, read, SEEK_SET);
-                rt = fread(buffer, 1, block, arch);
-            }
-            fseek(arch, write, SEEK_SET);
-            fwrite(buffer, 1, rt, arch);
-            read += rt;
-            write += rt;
-            block -= rt;
-        }
-    }
-
-    /*escreve o block no destino*/
-    block = b_final - b_init + 1; 
-    read =  tam;
-    write = b_destino - 1;
-
-    while (block > 0)
-    {
-        fseek(arch, read, SEEK_SET);
-        if (block >= 1024)
-        {
-            rt = fread(buffer, 1, 1024, arch);
-        }
-        else
-        {
-            rt = fread(buffer, 1, block, arch);
-        }
-
-        printf("write: %d\n", write);
-        fseek(arch, write - block, SEEK_SET);
-        fwrite(buffer, 1, rt, arch);
-        block -= rt;
-        read -= rt;
-        write -= rt;
-    }
-    rewind(arch);
-    ftruncate(fileno(arch), tam);
-    return 0;
-}
-
 int main()
 {
     FILE *arquivo_copia = fopen("arquivo_copia.txt", "r+");
 
-    move(arquivo_copia, 6, 8, 15);
+    move_bytes(arquivo_copia, 1, 3, 6);
 
     fclose(arquivo_copia);
 }
