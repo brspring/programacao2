@@ -68,6 +68,90 @@ void liberarDiretorio(dir_t *diretorio)
     diretorio->qntd = 0;
 }
 
+void atualizarIndices(dir_t *diretorio)
+{
+    nodo_t *atual = diretorio->head;
+    int indice = 0;
+
+    while (atual != NULL)
+    {
+        atual->arquivo.indice = indice;
+        atual = atual->prox;
+        indice++;
+    }
+}
+
+void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice)
+{
+    if (no == NULL || diretorio == NULL || diretorio->qntd == 0)
+    {
+        printf("Erro: Nó ou lista inválidos.\n");
+        return;
+    }
+
+    if (indice < 0 || indice >= diretorio->qntd)
+    {
+        printf("Erro: Índice fora dos limites da lista.\n");
+        return;
+    }
+
+    if (indice == no->arquivo.indice)
+    {
+        printf("O nó já está na posição correta.\n");
+        return;
+    }
+
+    FileInfo_t info = no->arquivo;
+    nodo_t *atual = diretorio->head;
+
+    removerNo(diretorio, no);
+    if (indice == 0)
+    {
+        nodo_t *novoNodo = malloc(sizeof(nodo_t));
+        novoNodo->arquivo = info;
+        novoNodo->prox = atual;
+        novoNodo->ant = NULL;
+
+        if (atual != NULL)
+        {
+            atual->ant = novoNodo;
+        }
+
+        diretorio->head = novoNodo;
+    }
+    else
+    {
+        int i = 0;
+        while (i < indice && atual != NULL)
+        {
+            atual = atual->prox;
+            i++;
+        }
+
+        if (atual == NULL)
+        {
+            adiciona_arq_lista(diretorio, &info);
+        }
+        else
+        {
+            nodo_t *novoNodo = malloc(sizeof(nodo_t));
+            novoNodo->arquivo = info;
+            novoNodo->prox = atual->prox;
+            novoNodo->ant = atual;
+            printf("usa mover para frenteeee\n");
+            if (atual->prox != NULL)
+            {
+                atual->prox->ant = novoNodo;
+            }
+            atual->prox = novoNodo;
+        }
+    }
+
+    diretorio->qntd++;
+    printf("quantidade: %d\n", diretorio->qntd);
+    atualizarIndices(diretorio);
+}
+
 void removerNo(dir_t *diretorio, nodo_t *no)
 {
     // Atualiza o ponteiro diretorio->ult se o nó removido for o último nó
@@ -178,10 +262,11 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     return 0;
 }
 
-int move_arquivo(FILE *arquivador, dir_t *diretorio, const char *name, const char *name2)
+int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char *name2)
 {
     nodo_t *arquivo_movido = buscarArquivoPorNome(diretorio, name);
     nodo_t *arquivo_destino = buscarArquivoPorNome(diretorio, name2);
+    rewind(arquivador);
 
     if (arquivo_movido == NULL || arquivo_destino == NULL)
     {
@@ -280,8 +365,16 @@ int main()
     const char *name = "a.txt";
     const char *name2 = "c.txt";
 
-    move_arquivo(arquivador, &diretorio, name, name2);
+    nodo_t *noParaMover = buscarArquivoPorNome(&diretorio, name);
+    printf("noParaMover: %s\n", noParaMover->arquivo.nome);
+
+    if (noParaMover != NULL)
+    {
+        moverNoParaIndice(&diretorio, noParaMover, 1);
+    }
+
     print_lista(&diretorio);
+
     fclose(arquivador);
     liberarDiretorio(&diretorio);
 }
