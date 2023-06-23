@@ -94,7 +94,6 @@ void removerNo(dir_t *diretorio, nodo_t *no)
         diretorio->ult = atual;
     }
 
-    // Remover o nó correspondente do diretório
     nodo_t *atual = diretorio->head;
     if (atual == no)
     {
@@ -156,7 +155,7 @@ void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice)
     {
         int i = indice - 1;
         removerNo(diretorio, no);
-        while (i > indice && atual != NULL)
+        while (i >= indice && atual != NULL) // Correção aqui
         {
             atual = atual->ant;
             i--;
@@ -164,16 +163,21 @@ void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice)
 
         if (atual == NULL)
         {
-            adiciona_arq_lista(diretorio, &info);
+            // adiciona_arq_lista(diretorio, &info);
         }
 
-        no->ant = atual;
-        no->prox = atual->prox;
-        if (atual->prox != NULL)
-        {
-            atual->prox->ant = no;
-        }
-        atual->prox = no;
+        nodo_t *novoNodo = malloc(sizeof(nodo_t));
+        novoNodo->arquivo = info;
+        novoNodo->prox = atual->prox;
+        novoNodo->ant = atual;
+        novoNodo->ant = atual;
+        novoNodo->prox = atual->prox;
+
+        if (atual->prox != NULL && atual != NULL)
+            atual->prox->ant = novoNodo;
+
+        if (atual != NULL)
+            atual->prox = novoNodo;
     }
     else // Move para frente
     {
@@ -195,14 +199,12 @@ void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice)
             novoNodo->arquivo = info;
             novoNodo->prox = atual->prox;
             novoNodo->ant = atual;
-            printf("usa mover para frenteeee\n");
             if (atual->prox != NULL)
             {
                 atual->prox->ant = novoNodo;
             }
             atual->prox = novoNodo;
         }
-        
     }
 
     diretorio->qntd++;
