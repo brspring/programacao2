@@ -81,77 +81,6 @@ void atualizarIndices(dir_t *diretorio)
     }
 }
 
-void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice)
-{
-    if (no == NULL || diretorio == NULL || diretorio->qntd == 0)
-    {
-        printf("Erro: Nó ou lista inválidos.\n");
-        return;
-    }
-
-    if (indice < 0 || indice >= diretorio->qntd)
-    {
-        printf("Erro: Índice fora dos limites da lista.\n");
-        return;
-    }
-
-    if (indice == no->arquivo.indice)
-    {
-        printf("O nó já está na posição correta.\n");
-        return;
-    }
-
-    FileInfo_t info = no->arquivo;
-    nodo_t *atual = diretorio->head;
-
-    removerNo(diretorio, no);
-    if (indice == 0)
-    {
-        nodo_t *novoNodo = malloc(sizeof(nodo_t));
-        novoNodo->arquivo = info;
-        novoNodo->prox = atual;
-        novoNodo->ant = NULL;
-
-        if (atual != NULL)
-        {
-            atual->ant = novoNodo;
-        }
-
-        diretorio->head = novoNodo;
-    }
-    else
-    {
-        int i = 0;
-        while (i < indice && atual != NULL)
-        {
-            atual = atual->prox;
-            i++;
-        }
-
-        if (atual == NULL)
-        {
-            adiciona_arq_lista(diretorio, &info);
-        }
-        else
-        {
-            nodo_t *novoNodo = malloc(sizeof(nodo_t));
-            novoNodo->arquivo = info;
-            novoNodo->prox = atual->prox;
-            novoNodo->ant = atual;
-            printf("usa mover para frenteeee\n");
-            if (atual->prox != NULL)
-            {
-                atual->prox->ant = novoNodo;
-            }
-            atual->prox = novoNodo;
-        }
-    }
-
-    diretorio->qntd++;
-    printf("quantidade: %d\n", diretorio->qntd);
-    atualizarIndices(diretorio);
-}
-
 void removerNo(dir_t *diretorio, nodo_t *no)
 {
     // Atualiza o ponteiro diretorio->ult se o nó removido for o último nó
@@ -183,6 +112,101 @@ void removerNo(dir_t *diretorio, nodo_t *no)
     diretorio->qntd--;
 
     free(no);
+}
+
+void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice)
+{
+    if (no == NULL || diretorio == NULL || diretorio->qntd == 0)
+    {
+        printf("Erro: Nó ou lista inválidos.\n");
+        return;
+    }
+
+    if (indice < 0 || indice >= diretorio->qntd)
+    {
+        printf("Erro: Índice fora dos limites da lista.\n");
+        return;
+    }
+
+    if (indice == no->arquivo.indice)
+    {
+        printf("O nó já está na posição correta.\n");
+        return;
+    }
+
+    FileInfo_t info = no->arquivo;
+    nodo_t *atual = diretorio->head;
+
+    if (indice == 0)
+    {
+        removerNo(diretorio, no);
+        nodo_t *novoNodo = malloc(sizeof(nodo_t));
+        novoNodo->arquivo = info;
+        novoNodo->prox = atual;
+        novoNodo->ant = NULL;
+
+        if (atual != NULL)
+        {
+            atual->ant = novoNodo;
+        }
+
+        diretorio->head = novoNodo;
+    }
+    else if (indice < no->arquivo.indice) // Move para trás
+    {
+        int i = indice - 1;
+        removerNo(diretorio, no);
+        while (i > indice && atual != NULL)
+        {
+            atual = atual->ant;
+            i--;
+        }
+
+        if (atual == NULL)
+        {
+            adiciona_arq_lista(diretorio, &info);
+        }
+
+        no->ant = atual;
+        no->prox = atual->prox;
+        if (atual->prox != NULL)
+        {
+            atual->prox->ant = no;
+        }
+        atual->prox = no;
+    }
+    else // Move para frente
+    {
+        removerNo(diretorio, no);
+        int i = 0;
+        while (i < indice && atual != NULL)
+        {
+            atual = atual->prox;
+            i++;
+        }
+
+        if (atual == NULL)
+        {
+            adiciona_arq_lista(diretorio, &info);
+        }
+        else
+        {
+            nodo_t *novoNodo = malloc(sizeof(nodo_t));
+            novoNodo->arquivo = info;
+            novoNodo->prox = atual->prox;
+            novoNodo->ant = atual;
+            printf("usa mover para frenteeee\n");
+            if (atual->prox != NULL)
+            {
+                atual->prox->ant = novoNodo;
+            }
+            atual->prox = novoNodo;
+        }
+        
+    }
+
+    diretorio->qntd++;
+    atualizarIndices(diretorio);
 }
 
 nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome)
@@ -362,7 +386,7 @@ int main()
 
     printa_metadados_lista(&diretorio, arquivador);
     /*-------------------------------------------------------------------*/
-    const char *name = "a.txt";
+    const char *name = "c.txt";
     const char *name2 = "c.txt";
 
     nodo_t *noParaMover = buscarArquivoPorNome(&diretorio, name);
