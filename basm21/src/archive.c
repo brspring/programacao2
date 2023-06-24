@@ -232,6 +232,8 @@ void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador)
 
 void printa_metadados_lista(dir_t *diretorio, FILE *arquivador)
 {
+    int offset = calcula_offset(arquivador, *diretorio);
+    fseek(arquivador, offset + 8, SEEK_SET);
     nodo_t *atual = diretorio->head;
     while (atual != NULL)
     {
@@ -285,6 +287,7 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
         return 1;
     }
 
+    printa_metadados_lista(diretorio, arquivador);
     return 0;
 }
 
@@ -338,8 +341,10 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
         return 2;
     }
 
+    printa_metadados_lista(diretorio, arquivador);
     atualizar_posicoes_arq(diretorio);
 }
+
 
 int main()
 {
@@ -347,7 +352,6 @@ int main()
     FILE *arquivador = fopen("backup.vpp", "wb+");
     struct stat f_data;
     long long offset = 0;
-    printf("offset: %lld\n", offset);
     if (arquivador == NULL)
     {
         perror("Erro ao abrir o arquivo de arquivador\n");
@@ -418,10 +422,9 @@ int main()
     memset(buffer, 'c', 8);
     fwrite(buffer, sizeof(char), 8, arquivador);
 
-    //printa_metadados_lista(&diretorio, arquivador);
     /*-------------------------------------------------------------------*/
-    const char *name = "b.txt";
-    const char *name2 = "c.txt";
+    const char *name = "a.txt";
+    const char *name2 = "b.txt"; 
     move_membro(arquivador, &diretorio, name, name2);
 
     print_lista(&diretorio);
