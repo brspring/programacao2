@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -233,7 +234,7 @@ void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador)
 void printa_metadados_lista(dir_t *diretorio, FILE *arquivador)
 {
     int offset = calcula_offset(arquivador, *diretorio);
-    fseek(arquivador, offset + 8, SEEK_SET);
+    fseek(arquivador, offset + 9, SEEK_SET);
     nodo_t *atual = diretorio->head;
     while (atual != NULL)
     {
@@ -291,11 +292,13 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     return 0;
 }
 
-void atualizar_posicoes_arq(dir_t *diretorio) {
+void atualizar_posicoes_arq(dir_t *diretorio)
+{
     int posicao = 9;
     nodo_t *nodo = diretorio->head;
 
-    while (nodo != NULL) {
+    while (nodo != NULL)
+    {
         nodo->arquivo.posicao = posicao;
         posicao += nodo->arquivo.tam;
         nodo = nodo->prox;
@@ -317,22 +320,25 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
     int destino;
 
     /*move do metadados na lista*/
-    if(arquivo_destino->arquivo.indice < arquivo_movido->arquivo.indice){
+    if (arquivo_destino->arquivo.indice < arquivo_movido->arquivo.indice)
+    {
         moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice + 1);
-    } else
+    }
+    else
         moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice);
-    
+
     /*move o conteudo do membro*/
-    
+
     destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam;
     b_arq_init = arquivo_movido->arquivo.posicao;
     b_arq_final = arquivo_movido->arquivo.posicao + arquivo_movido->arquivo.tam - 1;
 
-    if(destino > b_arq_final){
+    if (destino > b_arq_final)
+    {
         destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam - arquivo_movido->arquivo.tam;
     }
 
-    if(destino == b_arq_init)
+    if (destino == b_arq_init)
         return 1;
 
     rt = move_bytes(arquivador, b_arq_init, b_arq_final, destino);
@@ -345,6 +351,81 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
     atualizar_posicoes_arq(diretorio);
 }
 
+void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block)
+{
+    int rt2 = 0;
+    int rt;
+    FILE *arquivo = fopen(nome_arquivo, "rb");
+    if (arquivo == NULL)
+    {
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    if (backup == NULL)
+    {
+        perror("Erro ao abrir o arquivo de backup");
+        fclose(arquivo);
+        return;
+    }
+
+    char buffer[1024];
+    size_t bytes_lidos;
+
+    while (block > 0) 
+    {
+        if (block > sizeof(buffer))
+        {
+            rt = fread(buffer, 1, sizeof(buffer), arquivo);
+            fseek(backup, posicao + rt2, SEEK_SET);
+            fwrite(buffer, 1, rt, backup);
+            rt2 += rt;
+            block -= rt;
+        }
+        else
+        {
+            rt = fread(buffer, 1, block, arquivo);
+            fseek(backup, posicao + rt2, SEEK_SET);
+            fwrite(buffer, 1, rt, backup);
+            break;
+        }
+    }
+
+    fclose(arquivo);
+}
+
+void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, long long *offset)
+{
+    rewind(arquivador);
+    struct stat file_stat;
+    if (stat(nome_arquivo, &file_stat) == -1)
+    {
+        perror("Erro ao obter as informações do arquivo");
+        return;
+    }
+
+    printf("offset: %lld\n", *offset);
+
+    FileInfo_t arquivo;
+    strncpy(arquivo.nome, nome_arquivo, sizeof(arquivo.nome));
+    arquivo.tam = file_stat.st_size;
+    arquivo.st_dev = file_stat.st_dev;
+    arquivo.permissoes = file_stat.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    arquivo.ult_modif = file_stat.st_mtime;
+    arquivo.UserID = file_stat.st_uid;
+    arquivo.GroupID = file_stat.st_gid;
+    arquivo.posicao = sizeof(long long) + *offset + 1;
+
+    int posicao = arquivo.posicao;
+    int block = arquivo.posicao + arquivo.tam - 1;
+    adiciona_arq_lista(diretorio, &arquivo);
+
+    ler_conteudo(nome_arquivo, arquivador, posicao, block);
+
+    atualizar_posicoes_arq(diretorio);
+
+    *offset += arquivo.tam;
+}
 
 int main()
 {
@@ -364,70 +445,23 @@ int main()
     diretorio.head = NULL;
     diretorio.ult = NULL;
 
-    FileInfo_t arquivo1;
-    strcpy(arquivo1.nome, "a.txt");
-    arquivo1.posicao = sizeof(long long) + offset + 1;
-    arquivo1.indice = 0;
-    arquivo1.tam_inic = 8;
-    arquivo1.tam = 8;
-    arquivo1.st_dev = 0;
-    arquivo1.permissoes = 777;
-    arquivo1.ult_modif = time(NULL);
-    arquivo1.UserID = getuid();
-    arquivo1.GroupID = getgid();
+    // move_membro(arquivador, &diretorio, name, name2);
+    inserir_arq("a.txt", &diretorio, arquivador, &offset);
+    inserir_arq("b.txt", &diretorio, arquivador, &offset);
+    inserir_arq("c.txt", &diretorio, arquivador, &offset);
+    inserir_arq("d.txt", &diretorio, arquivador, &offset);
 
-    adiciona_arq_lista(&diretorio, &arquivo1);
     offset = calcula_offset(arquivador, diretorio);
-
-    FileInfo_t arquivo2;
-    strcpy(arquivo2.nome, "b.txt");
-    arquivo2.posicao = sizeof(long long) + offset + 1;
-    arquivo2.indice = 1;
-    arquivo2.tam_inic = 4;
-    arquivo2.tam = 4;
-    arquivo2.st_dev = 0;
-    arquivo2.permissoes = 777;
-    arquivo2.ult_modif = time(NULL);
-    arquivo2.UserID = getuid();
-    arquivo2.GroupID = getgid();
-
-    adiciona_arq_lista(&diretorio, &arquivo2);
-    offset = calcula_offset(arquivador, diretorio);
-
-    FileInfo_t arquivo3;
-    strcpy(arquivo3.nome, "c.txt");
-    arquivo3.posicao = sizeof(long long) + offset + 1;
-    arquivo3.indice = 2;
-    arquivo3.tam_inic = 8;
-    arquivo3.tam = 8;
-    arquivo3.st_dev = 0;
-    arquivo3.permissoes = 777;
-    arquivo3.ult_modif = time(NULL);
-    arquivo3.UserID = getuid();
-    arquivo3.GroupID = getgid();
-
-    adiciona_arq_lista(&diretorio, &arquivo3);
-    offset = calcula_offset(arquivador, diretorio);
-
+    fseek(arquivador, 0, SEEK_SET);
     fwrite(&offset, sizeof(long long), 1, arquivador);
 
-    char buffer[8];
-
-    memset(buffer, 'a', 8);
-    fwrite(buffer, sizeof(char), 8, arquivador);
-
-    memset(buffer, 'b', 4);
-    fwrite(buffer, sizeof(char), 4, arquivador);
-
-    memset(buffer, 'c', 8);
-    fwrite(buffer, sizeof(char), 8, arquivador);
-
-    /*-------------------------------------------------------------------*/
-    const char *name = "a.txt";
-    const char *name2 = "b.txt"; 
-    move_membro(arquivador, &diretorio, name, name2);
-
+    /*atualiza os indices e printa os metadados no backup*/
+    atualizarIndices(&diretorio);
+    atualizar_posicoes_arq(&diretorio);
+    printa_metadados_lista(&diretorio, arquivador);
     print_lista(&diretorio);
+
+    /*apaga lixos*/
     fclose(arquivador);
     liberarDiretorio(&diretorio);
 }
