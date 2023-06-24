@@ -130,3 +130,17 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
     printf("tamanhoNovo: %d\n", tamanhoNovo);
     
 */
+
+/*TESTE DA FUNCAO DE MOVER NO PARA INDICE
+
+    c
+const char *name = "a.txt";
+    const char *name2 = "b.txt";
+
+    nodo_t *noParaMover = buscarArquivoPorNome(&diretorio, name);
+    printf("noParaMover: %s\n", noParaMover->arquivo.nome);
+
+    if (noParaMover != NULL)
+    {
+        moverNoParaIndice(&diretorio, noParaMover, 1);
+    }*/

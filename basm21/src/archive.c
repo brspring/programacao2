@@ -303,10 +303,10 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
     int destino;
 
     destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam;
-
-    move_bytes(arquivador, arquivo_movido->arquivo.posicao, arquivo_movido->arquivo.posicao + arquivo_movido->arquivo.tam - 1, destino);
-
-    arquivo_movido->arquivo.posicao = destino;
+    if(buscarArquivoPorNome(diretorio, name2)->arquivo.indice < buscarArquivoPorNome(diretorio, name)->arquivo.indice){
+        moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice + 1);
+    } else
+        moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice);
 }
 
 int main()
@@ -388,17 +388,10 @@ int main()
 
     printa_metadados_lista(&diretorio, arquivador);
     /*-------------------------------------------------------------------*/
-    const char *name = "c.txt";
+    const char *name = "b.txt";
     const char *name2 = "c.txt";
 
-    nodo_t *noParaMover = buscarArquivoPorNome(&diretorio, name);
-    printf("noParaMover: %s\n", noParaMover->arquivo.nome);
-
-    if (noParaMover != NULL)
-    {
-        moverNoParaIndice(&diretorio, noParaMover, 1);
-    }
-
+    move_membro(arquivador, &diretorio, name, name2);
     print_lista(&diretorio);
 
     fclose(arquivador);
