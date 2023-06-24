@@ -44,7 +44,11 @@ void print_lista(dir_t *diretorio);
 
 void liberarDiretorio(dir_t *diretorio);
 
+void atualizarIndices(dir_t *diretorio);
+
 void removerNo(dir_t *diretorio, nodo_t *no);
+
+void moverNoParaIndice(dir_t *diretorio, nodo_t *no, int indice);
 
 nodo_t *buscarArquivoPorNome(dir_t *diretorio, const char *nome);
 
@@ -55,6 +59,10 @@ void printa_metadados_lista(dir_t *diretorio, FILE *arquivador);
 long long calcula_offset(FILE *arquivador, dir_t diretorio);
 
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
+
+void atualizar_posicoes_arq(dir_t *diretorio);
+
+int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char *name2);
 
 #endif
 

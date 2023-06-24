@@ -288,6 +288,17 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     return 0;
 }
 
+void atualizar_posicoes_arq(dir_t *diretorio) {
+    int posicao = 9;
+    nodo_t *nodo = diretorio->head;
+
+    while (nodo != NULL) {
+        nodo->arquivo.posicao = posicao;
+        posicao += nodo->arquivo.tam;
+        nodo = nodo->prox;
+    }
+}
+
 int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char *name2)
 {
     nodo_t *arquivo_movido = buscarArquivoPorNome(diretorio, name);
@@ -302,11 +313,32 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
     unsigned int b_arq_init, b_arq_final, rt, rt2, b_metadados_init, b_metadados_tam, b_metadados_final;
     int destino;
 
-    destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam;
-    if(buscarArquivoPorNome(diretorio, name2)->arquivo.indice < buscarArquivoPorNome(diretorio, name)->arquivo.indice){
+    /*move do metadados na lista*/
+    if(arquivo_destino->arquivo.indice < arquivo_movido->arquivo.indice){
         moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice + 1);
     } else
         moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice);
+    
+    /*move o conteudo do membro*/
+    
+    destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam;
+    b_arq_init = arquivo_movido->arquivo.posicao;
+    b_arq_final = arquivo_movido->arquivo.posicao + arquivo_movido->arquivo.tam - 1;
+
+    if(destino > b_arq_final){
+        destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam - arquivo_movido->arquivo.tam;
+    }
+
+    if(destino == b_arq_init)
+        return 1;
+
+    rt = move_bytes(arquivador, b_arq_init, b_arq_final, destino);
+    if (rt)
+    {
+        return 2;
+    }
+
+    atualizar_posicoes_arq(diretorio);
 }
 
 int main()
@@ -386,14 +418,13 @@ int main()
     memset(buffer, 'c', 8);
     fwrite(buffer, sizeof(char), 8, arquivador);
 
-    printa_metadados_lista(&diretorio, arquivador);
+    //printa_metadados_lista(&diretorio, arquivador);
     /*-------------------------------------------------------------------*/
     const char *name = "b.txt";
     const char *name2 = "c.txt";
-
     move_membro(arquivador, &diretorio, name, name2);
-    print_lista(&diretorio);
 
+    print_lista(&diretorio);
     fclose(arquivador);
     liberarDiretorio(&diretorio);
 }
