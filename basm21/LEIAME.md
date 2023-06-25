@@ -13,7 +13,7 @@ O meu programa esta estruturado da seguinte forma:
 
 Os metadados são uma lista de FiloInfo, ou seja:
 
-```
+```c
     typedef struct FileInfo
     {
         char nome[256];
@@ -38,7 +38,7 @@ E o diretório é uma lista duplamente encadeada de FileInfo, que contém todos 
 
 A lista está representada na seguinte estrutura:
 
-```
+```c
     struct nodo_l
 {
     FileInfo_t arquivo;
@@ -64,7 +64,7 @@ Eu verifico a flag que foi passada com o "getopt" em conjunto com um switch, o s
 
 Primeira mente na minha função principal eu abro o arquivador com fopen, no modo rb+ se caso ele existir, se ele não existir, é criado com wb+, o seguinte trecho de código trata isso:
 
-```
+```c
     FILE *arquivador = fopen("backup.vpp", "rb+");
     if (arquivador == NULL)
     {
@@ -87,6 +87,142 @@ Primeira mente na minha função principal eu abro o arquivador com fopen, no mo
     - 'x': Quando a opção 'x' é passada, o programa extrai o ou os arquivos do arquivador, você pode extrair todos ou apenas um específico.
 
 No geral, esse programa permite realizar operações básicas de manipulação de um arquivo de backup, como inserir, remover, listar e extrair arquivos
-### IMPORTANTE(não se esqueça de remover o arquivo os os arquivos).
 
-## Arquivo codifica-decodifica
+## Arquivo 'archive.c'
+Basicamente nesse aquivo eu tenho tudo o que eu preciso para mexer no meu diretorio, eu até poderia separar em remove.c, move.c, etc. Porém quando fiz isso não lidei muito bem com a quantidade alta de arquivos, preferi tudo junto mesmo.
+
+Esse arquivo possui uma grande quantidade de funções, onde 90% delas mexem na lista de structs. Também por esse fato evitei não fragmentar esse arquivo em mais partes, pois dava bastante dor de cabeça com a manipulação da lista.
+
+#Principais Funções
+
+## Insere 
+Eu não comecei pela função de remover, porém pela sequência lógica, ela é a que mais faz sentido de se mostrar primeiro.
+
+```c
+    void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, long long *offset)
+    {
+        struct stat file_stat;
+        FileInfo_t arquivo;
+        strncpy(arquivo.nome, nome_arquivo, sizeof(arquivo.nome));
+        arquivo.tam = file_stat.st_size;
+        arquivo.st_dev = file_stat.st_dev;
+        arquivo.permissoes = file_stat.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+        arquivo.ult_modif = file_stat.st_mtime;
+        arquivo.UserID = file_stat.st_uid;
+        arquivo.GroupID = file_stat.st_gid;
+        
+        if (diretorio->qntd == 0)
+        {
+            arquivo.posicao = sizeof(long long) + *offset + 1;
+        }
+        else
+        {
+            nodo_t *ultimoArquivo = diretorio->ult;
+            arquivo.posicao = ultimoArquivo->arquivo.posicao + ultimoArquivo->arquivo.tam;
+        }
+    
+        int posicao = arquivo.posicao;
+        int block = arquivo.posicao + arquivo.tam - 1;
+        adiciona_arq_lista(diretorio, &arquivo);
+    
+        ler_conteudo(nome_arquivo, arquivador, posicao, block);
+    
+        atualizar_posicoes_arq(diretorio);
+        printa_metadados_lista(diretorio, arquivador);
+        *offset += arquivo.tam;
+    }
+```
+Primeiro adiciono os metadados do arquivo nele, para inserir os metadados na lista na posição correspondente, após isso eu adiciono o arquivo na lista e leio seu conteudo para imprimilo em forma de bytes no arquivador, e a função 'printa_metadados_lista' coloca os metadados em forma de bytes no diretório do arquivador.
+
+## Move
+
+Provavelmente a função/operação mais confusa e complicada de ser feita, mesmo com o move_bytes.
+
+```c
+    int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char *name2)
+{
+    nodo_t *arquivo_movido = buscarArquivoPorNome(diretorio, name);
+    nodo_t *arquivo_destino = buscarArquivoPorNome(diretorio, name2);
+    rewind(arquivador);
+    
+    unsigned int b_arq_init, b_arq_final, rt;
+    int destino;
+
+    /*move do metadados na lista*/
+    if (arquivo_destino->arquivo.indice < arquivo_movido->arquivo.indice)
+    {
+        moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice + 1);
+    }
+    else
+        moverNoParaIndice(diretorio, arquivo_movido, arquivo_destino->arquivo.indice);
+    
+    destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam;
+    b_arq_init = arquivo_movido->arquivo.posicao;
+    b_arq_final = arquivo_movido->arquivo.posicao + arquivo_movido->arquivo.tam - 1;
+
+    if (destino > b_arq_final)
+    {
+        destino = arquivo_destino->arquivo.posicao + arquivo_destino->arquivo.tam - arquivo_movido->arquivo.tam;
+    }
+    
+    rt = move_bytes(arquivador, b_arq_init, b_arq_final, destino);
+
+    printa_metadados_lista(diretorio, arquivador);
+    atualizar_posicoes_arq(diretorio);
+}
+```
+Nessa função, como citado anteriormente, eu movo o arquivo, porém para isso eu preciso mover seu conteúdo e seus metadados na lista também. E após move-lo, é preciso atualizar seu índice e sua posição (que indica o primeiro byte do conteúdo)
+
+## Remove
+
+A função remove member me deu alguns trabalhos por conta das operações com bytes e por me confudir quando eu tinha que subtrair 1 ou não.
+
+```c
+    int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
+{
+    nodo_t *removal = buscarArquivoPorNome(diretorio, name);
+    long long offset = calcula_offset(arquivador, *diretorio);
+    printf("offset: %lld\n", offset);
+
+    if (removal == NULL)
+    {
+        return 1;
+    }
+    unsigned int b_metadado_fim, b_metadado_init;
+
+    if (removal->prox == NULL)
+    {
+        b_metadado_init = 9 + offset + (removal->arquivo.indice * sizeof(FileInfo_t));
+        b_metadado_fim = b_metadado_init + sizeof(FileInfo_t);
+    }
+    else
+    {
+        b_metadado_init = 9 + offset + (removal->arquivo.indice * sizeof(FileInfo_t)) + 1;
+        b_metadado_fim = b_metadado_init + sizeof(FileInfo_t);
+    }
+
+    int retorno = remove_bytes(arquivador, b_metadado_init, b_metadado_fim);
+
+    if (retorno != 0)
+        printf("retorno: %d\n", retorno);
+
+    unsigned int b_arq_init = removal->arquivo.posicao;
+    unsigned int b_arq_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
+
+    /* Remove o conteúdo do membro */
+    int rt = remove_bytes(arquivador, b_arq_init + 1, b_arq_final + 1);
+    if (rt)
+        return 1;
+
+    return 0;
+}
+
+```
+Eu primeiro remove os metadados, por ficarem no fim do arquivo e atrapalharem menos na hora da remoção e após isso removo o conteúdo, e assim como na função de mover, é necessário atualizar seu indice e posição após a remoção.
+
+
+
+
+
+
+
