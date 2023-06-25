@@ -146,7 +146,6 @@ void removerNo(dir_t *diretorio, nodo_t *no)
     }
 
     diretorio->qntd--;
-
     free(no);
 }
 
@@ -282,38 +281,20 @@ void printa_metadados_lista(dir_t *diretorio, FILE *arquivador)
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 {
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
-    printf("removal: %s\n", removal->arquivo.nome);
-    unsigned int b_arq_init, b_arq_final, rt, rt2, b_metadados_init, b_metadados_tam, b_metadados_final;
-    int indice;
-    long long offset = 0;
 
     if (removal == NULL)
     {
         return 1;
     }
 
-    indice = removal->arquivo.indice;
-    /*calculo os valores para remover o conteudo do membro*/
-    b_arq_init = removal->arquivo.posicao;
-    b_arq_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
+    unsigned int b_arq_init = removal->arquivo.posicao;
+    unsigned int b_arq_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
 
-    /*calcula o offset antes de tudo para remover os metadados da forma certa*/
-    offset = calcula_offset(arquivador, *diretorio);
-
-    /*remove os metadados do membro*/
-    b_metadados_init = sizeof(long long) + offset;
-    removerNo(diretorio, removal);
-    fseek(arquivador, b_metadados_init, SEEK_SET);
-    printa_metadados_lista(diretorio, arquivador);
-
-    /*remove o conteudo do membro*/
-    rt = remove_bytes(arquivador, b_arq_init, b_arq_final);
+    /* Remove o conteúdo do membro */
+    int rt = remove_bytes(arquivador, b_arq_init + 1, b_arq_final + 1);
     if (rt)
-    {
         return 1;
-    }
-
-    printa_metadados_lista(diretorio, arquivador);
+    
     return 0;
 }
 
@@ -411,6 +392,7 @@ void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block
         {
             rt = fread(buffer, 1, block, arquivo);
             fseek(backup, posicao + rt2, SEEK_SET);
+            printf("posicao + rt2 = %d\n", posicao + rt2);
             fwrite(buffer, 1, rt, backup);
             break;
         }
@@ -454,7 +436,6 @@ void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, l
     ler_conteudo(nome_arquivo, arquivador, posicao, block);
 
     atualizar_posicoes_arq(diretorio);
-
     printa_metadados_lista(diretorio, arquivador);
     *offset += arquivo.tam;
 }
