@@ -2,14 +2,20 @@
 Arquivador que faz operações com arquivos e seus metadados.
 
 NOME: Bruno Aziz Spring Machado   GRR: GRR20211279
+## Ideia principal
+
+Eu pensei no arquivador da seguinte maneira:
+
+| OFFSET | conteudo dos arquivos | Diretório com os Metadados |
+
+onde o OFFSET é o tamanho do conteudo dos arquivos.
+
+Algo importante de pontuar é que meus arquivos possuem "posicao" e "indice". Posição é o primeiro byte deles no arquivador e Indice é o indice na lista, o primeiro sendo 0.
 
 ## Estrutura
 
 O meu projeto está separado em dois arquivos principais, onde o ’main.c’ se trata do principal, o secundário
 é: ’archive.c’. E, por fim, o ’Makefile’ que serve para a execução do programa.
-
-O meu programa esta estruturado da seguinte forma:
-| OFFSET | conteudo dos arquivos | Diretório com os Metadados |
 
 Os metadados são uma lista de FiloInfo, ou seja:
 
@@ -219,6 +225,22 @@ A função remove member me deu alguns trabalhos por conta das operações com b
 
 ```
 Eu primeiro remove os metadados, por ficarem no fim do arquivo e atrapalharem menos na hora da remoção e após isso removo o conteúdo, e assim como na função de mover, é necessário atualizar seu indice e posição após a remoção.
+
+#Lista
+
+Para manipulação da lista, as principais funções foram:
+
+```c
+ adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo);
+
+ carregar_metadados_lista(dir_t *diretorio, FILE *arquivador);
+
+ print_lista(dir_t *diretorio);
+
+ printa_metadados_lista(dir_t *diretorio, FILE *arquivador);
+```
+
+A principal delas sendo a 'carregar_metadados_lista'. Essa função lê um arquivador já existente, lê seu diretório e com base nesse diretório lido, acrescenta na lista.
 
 
 
