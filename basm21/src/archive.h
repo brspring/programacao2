@@ -29,7 +29,7 @@ struct nodo_l
     FileInfo_t arquivo;
     nodo_t *prox;
     nodo_t *ant;
-} nodo_l;
+};
 
 typedef struct dir
 {
@@ -38,7 +38,15 @@ typedef struct dir
     nodo_t *ult;
 } dir_t;
 
+void inicia_dir(dir_t *diretorio);
+
+long long le_offset(FILE *arquivador);
+
 void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo);
+
+void carregar_metadados_lista(dir_t *diretorio, FILE *arquivador);
+
+long long calcula_offset(FILE *arquivador, dir_t diretorio);
 
 void print_lista(dir_t *diretorio);
 
@@ -56,13 +64,17 @@ void adiciona_metadados(FileInfo_t arquivo, FILE *arquivador);
 
 void printa_metadados_lista(dir_t *diretorio, FILE *arquivador);
 
-long long calcula_offset(FILE *arquivador, dir_t diretorio);
-
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador);
 
 void atualizar_posicoes_arq(dir_t *diretorio);
 
 int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char *name2);
+
+void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block);
+
+void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, long long *offset);
+
+void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador);
 
 #endif
 
@@ -212,3 +224,49 @@ const char *name = "a.txt";
     fwrite(buffer, sizeof(char), 8, arquivador);
     */
 /*-------------------------------------------------------------------*/
+/*void extrai_arquivo_para_diretorio_atual(const char *nome_arquivo, const char *arquivador_nome,  dir_t *diretorio)
+{
+    FILE *arquivador = fopen(arquivador_nome, "rb");
+    if (arquivador == NULL) {
+        perror("Erro ao abrir o arquivo arquivador");
+        return;
+    }
+
+    nodo_t *nodo = diretorio->head;
+    while (nodo != NULL) {
+        if (strcmp(nodo->arquivo.nome, nome_arquivo) == 0) {
+            char caminho_destino[1024];
+            
+            FILE *arquivo_destino = fopen(nome_arquivo, "wb");
+            if (arquivo_destino == NULL) {
+                perror("Erro ao abrir o arquivo de destino");
+                fclose(arquivador);
+                return;
+            }
+
+            // Copia o conteúdo do arquivo do arquivador para o destino
+            fseek(arquivador, nodo->arquivo.posicao, SEEK_SET);
+            char buffer[1024];
+            size_t bytes_lidos;
+
+            while ((bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivador)) > 0) {
+                fwrite(buffer, 1, bytes_lidos, arquivo_destino);
+            }
+
+            fclose(arquivo_destino);
+            printf("Arquivo copiado do arquivador para o diretório atual: %s\n", caminho_destino);
+            break;
+        }
+
+        nodo = nodo->prox;
+    }
+
+    fclose(arquivador);
+}*/
+
+/*
+EXTRACT
+
+copiar_arquivo_do_arquivador("b.txt", arquivador);
+*/
+

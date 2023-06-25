@@ -20,7 +20,8 @@ void inicia_dir(dir_t *diretorio)
     diretorio->ult = NULL;
 }
 
-long long le_offset(FILE *arquivador){
+long long le_offset(FILE *arquivador)
+{
     long long offset;
     fread(&offset, sizeof(long long), 1, arquivador);
     return offset;
@@ -44,6 +45,18 @@ void adiciona_arq_lista(dir_t *diretorio, FileInfo_t *arquivo)
     }
 
     diretorio->qntd++;
+}
+
+long long calcula_offset(FILE *arquivador, dir_t diretorio)
+{
+    long long offset = 0;
+    nodo_t *agr = diretorio.head;
+    while (agr != NULL)
+    {
+        offset += agr->arquivo.tam;
+        agr = agr->prox;
+    }
+    return offset;
 }
 
 void print_lista(dir_t *diretorio)
@@ -95,7 +108,8 @@ void atualizarIndices(dir_t *diretorio)
     }
 }
 
-void exclui_todos_metadados_arquivador(FILE *arquivador) {
+void exclui_todos_metadados_arquivador(FILE *arquivador)
+{
     long long offset = le_offset(arquivador);
 
     fseek(arquivador, 0, SEEK_SET);
@@ -265,18 +279,6 @@ void printa_metadados_lista(dir_t *diretorio, FILE *arquivador)
     }
 }
 
-long long calcula_offset(FILE *arquivador, dir_t diretorio)
-{
-    long long offset = 0;
-    nodo_t *agr = diretorio.head;
-    while (agr != NULL)
-    {
-        offset += agr->arquivo.tam;
-        agr = agr->prox;
-    }
-    return offset;
-}
-
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 {
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
@@ -395,7 +397,7 @@ void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block
     char buffer[1024];
     size_t bytes_lidos;
 
-    while (block > 0) 
+    while (block > 0)
     {
         if (block > sizeof(buffer))
         {
@@ -419,7 +421,6 @@ void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block
 
 void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, long long *offset)
 {
-    rewind(arquivador);
     struct stat file_stat;
     if (stat(nome_arquivo, &file_stat) == -1)
     {
@@ -435,7 +436,16 @@ void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, l
     arquivo.ult_modif = file_stat.st_mtime;
     arquivo.UserID = file_stat.st_uid;
     arquivo.GroupID = file_stat.st_gid;
-    arquivo.posicao = sizeof(long long) + *offset + 1;
+    if (diretorio->qntd == 0)
+    {
+        printf("entrouu\n");
+        arquivo.posicao = sizeof(long long) + *offset + 1;
+    }
+    else
+    {
+        nodo_t *ultimoArquivo = diretorio->ult;
+        arquivo.posicao = ultimoArquivo->arquivo.posicao + ultimoArquivo->arquivo.tam;
+    }
 
     int posicao = arquivo.posicao;
     int block = arquivo.posicao + arquivo.tam - 1;
@@ -445,6 +455,7 @@ void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, l
 
     atualizar_posicoes_arq(diretorio);
 
+    printa_metadados_lista(diretorio, arquivador);
     *offset += arquivo.tam;
 }
 
@@ -454,7 +465,7 @@ void carregar_metadados_lista(dir_t *diretorio, FILE *arquivador)
     long long offset;
     fread(&offset, sizeof(long long), 1, arquivador);
     fseek(arquivador, offset + 9, SEEK_SET);
-  
+
     FileInfo_t arquivo;
     while (fread(&arquivo, sizeof(FileInfo_t), 1, arquivador) == 1)
     {
@@ -462,33 +473,40 @@ void carregar_metadados_lista(dir_t *diretorio, FILE *arquivador)
     }
 }
 
-void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador) {
+void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
+{
     DIR *dir = opendir(".");
-    if (dir == NULL) {
+    if (dir == NULL)
+    {
         perror("Erro ao abrir o diretório atual");
         return;
     }
 
     // Percorre os arquivos do diretório atual
-   struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL)
+    {
         struct stat st;
         char path[1024];
         snprintf(path, sizeof(path), "%s/%s", ".", entry->d_name);
-        if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
-            if (strcmp(entry->d_name, nome_arquivo) == 0) {
+        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+        {
+            if (strcmp(entry->d_name, nome_arquivo) == 0)
+            {
                 char nome_copia[256];
                 snprintf(nome_copia, sizeof(nome_copia), "copia_%s", nome_arquivo);
 
                 FILE *arquivo_original = fopen(nome_arquivo, "rb");
-                if (arquivo_original == NULL) {
+                if (arquivo_original == NULL)
+                {
                     perror("Erro ao abrir o arquivo original");
                     closedir(dir);
                     return;
                 }
 
                 FILE *arquivo_copia = fopen(nome_copia, "wb");
-                if (arquivo_copia == NULL) {
+                if (arquivo_copia == NULL)
+                {
                     perror("Erro ao criar o arquivo de cópia");
                     fclose(arquivo_original);
                     closedir(dir);
@@ -497,7 +515,8 @@ void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador) {
 
                 char buffer[1024];
                 size_t bytes_lidos;
-                while ((bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivo_original)) > 0) {
+                while ((bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivo_original)) > 0)
+                {
                     fwrite(buffer, 1, bytes_lidos, arquivo_copia);
                 }
 
@@ -509,8 +528,7 @@ void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador) {
     closedir(dir);
 }
 
-
-int main()
+/*int main()
 {
 
     FILE *arquivador = fopen("backup.vpp", "rb+");
@@ -532,8 +550,8 @@ int main()
     //carregar_metadados_lista(&diretorio, arquivador);
 
 
-    /*---------------------------------TESTE INSERÇAO + PRINTA METADADOS------------------------------------*/
-    
+    //---------------------------------TESTE INSERÇAO + PRINTA METADADOS------------------------------------
+
     inserir_arq("a.txt", &diretorio, arquivador, &offset);
     inserir_arq("b.txt", &diretorio, arquivador, &offset);
     inserir_arq("c.txt", &diretorio, arquivador, &offset);
@@ -544,7 +562,7 @@ int main()
     fseek(arquivador, 0, SEEK_SET);
     fwrite(&offset, sizeof(long long), 1, arquivador);
 
-    /*const char *nomeMembro = "b.txt";
+    const char *nomeMembro = "b.txt";
     rt = remove_member(nomeMembro, &diretorio, arquivador);
     if (rt == 0)
     {
@@ -553,9 +571,9 @@ int main()
     else
     {
         printf("Erro ao remover o arquivo\n");
-    }*/
+    }
 
-    /*atualiza os indices e printa os metadados no backup*/
+    //atualiza os indices e printa os metadados no backup
     //exclui_todos_metadados_arquivador(arquivador);
 
     atualizarIndices(&diretorio);
@@ -564,7 +582,7 @@ int main()
     printa_metadados_lista(&diretorio, arquivador);
     print_lista(&diretorio);
 
-    /*apaga lixos*/
+    //apaga lixos
     //liberarDiretorio(&diretorio);
     fclose(arquivador);
-}
+}*/
