@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 {
     int i,rt, option;
     long long offset;
+    struct stat file_stat;
 
     if (argc == 1)
     {
@@ -26,7 +27,7 @@ int main(int argc, char **argv)
     FILE *arquivador = fopen("backup.vpp", "rb+");
     if (arquivador == NULL)
     {
-        arquivador = fopen("backup.vpp", "wb+");
+        arquivador = fopen("backup.vpp", "wb");
         if (arquivador == NULL)
         {
             perror("Erro ao criar o arquivo de backup");
@@ -60,9 +61,9 @@ int main(int argc, char **argv)
             long long offset2 = calcula_offset(arquivador, diretorio);
             printf("novo offset apos remocao: %lld\n", offset2);
 
-            atualizar_posicoes_arq(&diretorio);
             rewind(arquivador);
             fwrite(&offset2, sizeof(long long), 1, arquivador);
+            rewind(arquivador);
 
             break;
         case 'm':
@@ -77,9 +78,7 @@ int main(int argc, char **argv)
             {
                 printf("Erro ao mover o membro.\n");
             }
-
-            atualizarIndices(&diretorio);
-            atualizar_posicoes_arq(&diretorio);
+            rewind(arquivador);
             break;
         case 'i': // INSERE
             carregar_metadados_lista(&diretorio, arquivador);
@@ -94,12 +93,13 @@ int main(int argc, char **argv)
             printf("Offset: %lld\n", offset);
             fseek(arquivador, 0, SEEK_SET);
             fwrite(&offset, sizeof(long long), 1, arquivador);
-
+            
+            rewind(arquivador);
             atualizarIndices(&diretorio);
             atualizar_posicoes_arq(&diretorio);
-
             break;
         case 'c': // LISTA
+            rewind(arquivador);
             carregar_metadados_lista(&diretorio, arquivador);
             printa_metadados_lista(&diretorio, arquivador);
             print_lista(&diretorio);
@@ -125,6 +125,7 @@ int main(int argc, char **argv)
                         }
                 }
             }
+            rewind(arquivador);
             break;
         case 'h':
             printf("Opções:\n");
@@ -142,7 +143,9 @@ int main(int argc, char **argv)
         }
     }
 
-    // print_lista(&diretorio);
+    atualizarIndices(&diretorio);
+    atualizar_posicoes_arq(&diretorio);
+    rewind(arquivador);
     printa_metadados_lista(&diretorio, arquivador);
     liberarDiretorio(&diretorio);
     fclose(arquivador);

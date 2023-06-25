@@ -373,6 +373,7 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
 
     printa_metadados_lista(diretorio, arquivador);
     atualizar_posicoes_arq(diretorio);
+    return 0;
 }
 
 void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block)
@@ -518,64 +519,6 @@ int copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
             }
         }
     }
+    return 0;
     closedir(dir);
 }
-
-/*int main()
-{
-
-    FILE *arquivador = fopen("backup.vpp", "rb+");
-    if (arquivador == NULL)
-    {
-        arquivador = fopen("backup.vpp", "wb+");
-        if(arquivador == NULL){
-            perror("Erro ao criar o arquivo de backup");
-            return 1;
-        }
-    }
-
-    struct stat f_data;
-    long long offset = 0;
-    int rt;
-
-    dir_t diretorio;
-    inicia_dir(&diretorio);
-    //carregar_metadados_lista(&diretorio, arquivador);
-
-
-    //---------------------------------TESTE INSERÇAO + PRINTA METADADOS------------------------------------
-
-    inserir_arq("a.txt", &diretorio, arquivador, &offset);
-    inserir_arq("b.txt", &diretorio, arquivador, &offset);
-    inserir_arq("c.txt", &diretorio, arquivador, &offset);
-    inserir_arq("d.txt", &diretorio, arquivador, &offset);
-
-    offset = calcula_offset(arquivador, diretorio);
-    printf("offset: %lld\n", offset);
-    fseek(arquivador, 0, SEEK_SET);
-    fwrite(&offset, sizeof(long long), 1, arquivador);
-
-    const char *nomeMembro = "b.txt";
-    rt = remove_member(nomeMembro, &diretorio, arquivador);
-    if (rt == 0)
-    {
-        printf("Arquivo removido com sucesso\n");
-    }
-    else
-    {
-        printf("Erro ao remover o arquivo\n");
-    }
-
-    //atualiza os indices e printa os metadados no backup
-    //exclui_todos_metadados_arquivador(arquivador);
-
-    atualizarIndices(&diretorio);
-    atualizar_posicoes_arq(&diretorio);
-
-    printa_metadados_lista(&diretorio, arquivador);
-    print_lista(&diretorio);
-
-    //apaga lixos
-    //liberarDiretorio(&diretorio);
-    fclose(arquivador);
-}*/
