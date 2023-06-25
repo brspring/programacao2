@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <getopt.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -13,8 +14,7 @@
 
 int main(int argc, char **argv)
 {
-    char *destinoNome;
-    int i, option;
+    int i,rt, option;
     long long offset;
 
     if (argc == 1)
@@ -34,33 +34,21 @@ int main(int argc, char **argv)
         }
     }
 
-    struct stat f_data;
-
     dir_t diretorio;
     inicia_dir(&diretorio);
 
-    while ((option = getopt(argc, argv, "r:m:i:c::")) != -1)
+    while ((option = getopt(argc, argv, "r:m:i:c::x:h::")) != -1)
     {
         switch (option)
         {
-        case 'r': // REMOVE  
+        case 'r': // REMOVE
             carregar_metadados_lista(&diretorio, arquivador);
             atualizarIndices(&diretorio);
-            const char *nomeMembro = argv[2];
+            const char *nomeMembro = argv[3];
             nodo_t *remove = buscarArquivoPorNome(&diretorio, nomeMembro);
 
-            int tamantigo = get_size(arquivador);
             offset = calcula_offset(arquivador, diretorio);
-            /* Remove o metadado do arquivo */
 
-            //remover os bytes do metadados
-            int b_metadado_init = 9 + offset + (remove->arquivo.indice * sizeof(FileInfo_t)) + 1;
-            int b_metadado_fim = b_metadado_init + sizeof(FileInfo_t);
-            int rt = remove_bytes(arquivador, b_metadado_init, b_metadado_fim );
-            if (rt != 0)
-                printf("erro\n");
-            
-            //remover os bytes do conteudo
             int resultado = remove_member(nomeMembro, &diretorio, arquivador);
 
             if (resultado != 0)
@@ -72,17 +60,31 @@ int main(int argc, char **argv)
             long long offset2 = calcula_offset(arquivador, diretorio);
             printf("novo offset apos remocao: %lld\n", offset2);
 
+            atualizar_posicoes_arq(&diretorio);
             rewind(arquivador);
             fwrite(&offset2, sizeof(long long), 1, arquivador);
 
             break;
         case 'm':
-            // Lógica para tratar a opção '-m'
+            const char *name = argv[4];
+            const char *name2 = argv[2];
+            carregar_metadados_lista(&diretorio, arquivador);
+
+            int retorno;
+            retorno = move_membro(arquivador, &diretorio, name, name2);
+
+            if (retorno != 0)
+            {
+                printf("Erro ao mover o membro.\n");
+            }
+
+            atualizarIndices(&diretorio);
+            atualizar_posicoes_arq(&diretorio);
             break;
         case 'i': // INSERE
             carregar_metadados_lista(&diretorio, arquivador);
-
-            for (i = optind - 1; i < argc; i++)
+            
+            for (i = optind; i < argc; i++)
             {
                 printf("Inserindo arquivo %s\n", argv[i]);
                 inserir_arq(argv[i], &diretorio, arquivador, &offset);
@@ -101,6 +103,38 @@ int main(int argc, char **argv)
             carregar_metadados_lista(&diretorio, arquivador);
             printa_metadados_lista(&diretorio, arquivador);
             print_lista(&diretorio);
+            break;
+        case 'x':
+            carregar_metadados_lista(&diretorio, arquivador);
+            if (strcmp(argv[2], "backup.vpp") == 0)
+            {
+                if (argv[3] != NULL)
+                {
+                    rt = copiar_arquivo_do_arquivador(argv[3], arquivador);
+                    if (rt != 0)
+                        printf("erro\n");
+                }
+                else
+                {
+                        nodo_t *agr = diretorio.head;
+                        while (agr != NULL)
+                        {
+                            printf("Extraindo arquivo %s\n", agr->arquivo.nome);
+                            rt = copiar_arquivo_do_arquivador(agr->arquivo.nome, arquivador);
+                            agr = agr->prox;
+                        }
+                }
+            }
+            break;
+        case 'h':
+            printf("Opções:\n");
+            printf("-r <nome do membro> : remove o membro do arquivo\n");
+            printf("-m <membro destino> <membro movido> : move o membro para frente do membro destino\n");
+            printf("-i <nome do membro> : insere o membro no arquivo\n");
+            printf("-c : lista os membros do arquivo e seus metadados\n");
+            printf("-x <nome do arquivo> : extrai o membro do arquivo\n");
+            printf("\n");
+            printf("Em caso de erro, tente remover o arquivo backup.vpp e insira novos arquivos.\n");
             break;
         default:
             printf("Opção inválida!\n");

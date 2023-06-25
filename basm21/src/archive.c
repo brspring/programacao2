@@ -5,6 +5,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdio.h>
 
 #include <unistd.h>
 #include <time.h>
@@ -281,11 +282,30 @@ void printa_metadados_lista(dir_t *diretorio, FILE *arquivador)
 int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 {
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
+    long long offset = calcula_offset(arquivador, *diretorio);
+    printf("offset: %lld\n", offset);
 
     if (removal == NULL)
     {
         return 1;
     }
+    unsigned int b_metadado_fim, b_metadado_init;
+
+    if (removal->prox == NULL)
+    {
+        b_metadado_init = 9 + offset + (removal->arquivo.indice * sizeof(FileInfo_t));
+        b_metadado_fim = b_metadado_init + sizeof(FileInfo_t);
+    }
+    else
+    {
+        b_metadado_init = 9 + offset + (removal->arquivo.indice * sizeof(FileInfo_t)) + 1;
+        b_metadado_fim = b_metadado_init + sizeof(FileInfo_t);
+    }
+
+    int retorno = remove_bytes(arquivador, b_metadado_init, b_metadado_fim);
+
+    if (retorno != 0)
+        printf("retorno: %d\n", retorno);
 
     unsigned int b_arq_init = removal->arquivo.posicao;
     unsigned int b_arq_final = removal->arquivo.posicao + removal->arquivo.tam - 1;
@@ -294,7 +314,7 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
     int rt = remove_bytes(arquivador, b_arq_init + 1, b_arq_final + 1);
     if (rt)
         return 1;
-    
+
     return 0;
 }
 
@@ -322,7 +342,7 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
         return 1;
     }
 
-    unsigned int b_arq_init, b_arq_final, rt, rt2, b_metadados_init, b_metadados_tam, b_metadados_final;
+    unsigned int b_arq_init, b_arq_final, rt;
     int destino;
 
     /*move do metadados na lista*/
@@ -349,9 +369,7 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
 
     rt = move_bytes(arquivador, b_arq_init, b_arq_final, destino);
     if (rt)
-    {
         return 2;
-    }
 
     printa_metadados_lista(diretorio, arquivador);
     atualizar_posicoes_arq(diretorio);
@@ -359,8 +377,6 @@ int move_membro(FILE *arquivador, dir_t *diretorio, const char *name, const char
 
 void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block)
 {
-    int rt2 = 0;
-    int rt;
     FILE *arquivo = fopen(nome_arquivo, "rb");
     if (arquivo == NULL)
     {
@@ -378,24 +394,21 @@ void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block
     char buffer[1024];
     size_t bytes_lidos;
 
-    while (block > 0)
+    if (block > sizeof(buffer))
     {
-        if (block > sizeof(buffer))
+        while (block > 0 && (bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivo)) > 0)
         {
-            rt = fread(buffer, 1, sizeof(buffer), arquivo);
-            fseek(backup, posicao + rt2, SEEK_SET);
-            fwrite(buffer, 1, rt, backup);
-            rt2 += rt;
-            block -= rt;
+            fseek(backup, posicao, SEEK_SET);
+            fwrite(buffer, 1, bytes_lidos, backup);
+            posicao += bytes_lidos;
+            block -= bytes_lidos;
         }
-        else
-        {
-            rt = fread(buffer, 1, block, arquivo);
-            fseek(backup, posicao + rt2, SEEK_SET);
-            printf("posicao + rt2 = %d\n", posicao + rt2);
-            fwrite(buffer, 1, rt, backup);
-            break;
-        }
+    }
+    else
+    {
+        bytes_lidos = fread(buffer, 1, block, arquivo);
+        fseek(backup, posicao, SEEK_SET);
+        fwrite(buffer, 1, bytes_lidos, backup);
     }
 
     fclose(arquivo);
@@ -420,7 +433,6 @@ void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, l
     arquivo.GroupID = file_stat.st_gid;
     if (diretorio->qntd == 0)
     {
-        printf("entrouu\n");
         arquivo.posicao = sizeof(long long) + *offset + 1;
     }
     else
@@ -454,16 +466,15 @@ void carregar_metadados_lista(dir_t *diretorio, FILE *arquivador)
     }
 }
 
-void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
+int copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
 {
     DIR *dir = opendir(".");
     if (dir == NULL)
     {
         perror("Erro ao abrir o diretório atual");
-        return;
+        return 1;
     }
 
-    // Percorre os arquivos do diretório atual
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
@@ -482,7 +493,7 @@ void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
                 {
                     perror("Erro ao abrir o arquivo original");
                     closedir(dir);
-                    return;
+                    return 1;
                 }
 
                 FILE *arquivo_copia = fopen(nome_copia, "wb");
@@ -491,7 +502,7 @@ void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
                     perror("Erro ao criar o arquivo de cópia");
                     fclose(arquivo_original);
                     closedir(dir);
-                    return;
+                    return 2;
                 }
 
                 char buffer[1024];
@@ -502,6 +513,7 @@ void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
                 }
 
                 printf("Arquivo copiado com sucesso: %s\n", nome_copia);
+                return 0;
                 break;
             }
         }

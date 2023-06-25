@@ -74,7 +74,7 @@ void ler_conteudo(const char *nome_arquivo, FILE *backup, int posicao, int block
 
 void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, long long *offset);
 
-void copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador);
+int copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador);
 
 #endif
 
