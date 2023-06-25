@@ -128,11 +128,11 @@ int main(int argc, char **argv)
             break;
         case 'h':
             printf("Opções:\n");
-            printf("-r <nome do membro> : remove o membro do arquivo\n");
-            printf("-m <membro destino> <membro movido> : move o membro para frente do membro destino\n");
-            printf("-i <nome do membro> : insere o membro no arquivo\n");
+            printf("-r <nome arquivador> <nome do membro>\n");
+            printf("-m <membro destino> <nome arquivador> <membro movido>\n");
+            printf("-i <nome arquivador> <nome do membro>\n");
             printf("-c : lista os membros do arquivo e seus metadados\n");
-            printf("-x <nome do arquivo> : extrai o membro do arquivo\n");
+            printf("-x <nome arquivador> <nome do arquivo> : extrai o membro do arquivo\n");
             printf("\n");
             printf("Em caso de erro, tente remover o arquivo backup.vpp e insira novos arquivos.\n");
             break;
