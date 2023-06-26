@@ -1,4 +1,4 @@
-mais fácil de ser visualizado em: https://github.com/brspring/programacao2/edit/main/basm21/LEIAME.md](https://github.com/brspring/programacao2/blob/main/basm21/LEIAME.md)
+mais fácil de ser visualizado em: https://github.com/brspring/programacao2/edit/main/basm21/LEIAME.md](https://github.com/brspring/programacao2/blob/main/basm21/LEIAME.md
 
 # Arquivador Vina++
 Arquivador que faz operações com arquivos e seus metadados.
