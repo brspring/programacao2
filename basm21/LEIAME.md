@@ -103,6 +103,7 @@ Esse arquivo possui uma grande quantidade de funções, onde 90% delas mexem na 
 
 ## Insere 
 Eu não comecei pela função de remover, porém pela sequência lógica, ela é a que mais faz sentido de se mostrar primeiro.
+A minha inserção é feita sempre no fim, para que o ultimo arquivo inserido fique na ultima posição, tanto na lista quanto o conttúdo dele.
 
 ```c
     void inserir_arq(const char *nome_arquivo, dir_t *diretorio, FILE *arquivador, long long *offset)
@@ -138,7 +139,7 @@ Eu não comecei pela função de remover, porém pela sequência lógica, ela é
         *offset += arquivo.tam;
     }
 ```
-Primeiro adiciono os metadados do arquivo nele, para inserir os metadados na lista na posição correspondente, após isso eu adiciono o arquivo na lista e leio seu conteudo para imprimilo em forma de bytes no arquivador, e a função 'printa_metadados_lista' coloca os metadados em forma de bytes no diretório do arquivador.
+Primeiro adiciono os metadados (FileInfo) do arquivo nele, para inserir os metadados na lista na posição correspondente, após isso eu adiciono o arquivo na lista e leio seu conteudo para imprimilo em forma de bytes no arquivador, e a função 'printa_metadados_lista' coloca os metadados em forma de bytes no diretório do arquivador.
 
 ## Move
 
@@ -280,7 +281,7 @@ Para extrair um arquivo do meu arquivador, eu usei a seguinte função:
     return 0;
 }
 ```
-Onde eu pego o nome do arquivo a ser extraido e crio uma copia, essa copia eu mando para o diretorio 'basm21/' onde o meu programa está sendo executado. E o restante da lógica que era o mais fácil eu deixei na main mesmo.
+Onde eu pego o nome do arquivo a ser extraido e crio um novo arquivo copia, essa copia eu mando para o diretorio 'basm21/' onde o meu programa está sendo executado. E o restante da lógica que era o mais fácil eu deixei na main mesmo.
 
 #Lista
 
