@@ -3,8 +3,9 @@ Arquivador que faz operações com arquivos e seus metadados.
 
 NOME: Bruno Aziz Spring Machado   GRR: GRR20211279
 ## Ideia principal
+Uma das principais características desse arquivador é a capacidade de armazenar metadados relacionados aos arquivos em um diretório, metadados esses como nome, tamanho e data de modificação, indice, etc. Essas informações são mantidas em uma estrutura de dados organizada, permitindo um acesso rápido e eficiente aos arquivos.
 
-Eu pensei no arquivador da seguinte maneira:
+Para a implementação do meu arquvador eu pensei no arquivador da seguinte maneira:
 
 | OFFSET | conteudo dos arquivos | Diretório com os Metadados |
 
