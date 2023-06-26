@@ -177,7 +177,8 @@ Provavelmente a função/operação mais confusa e complicada de ser feita, mesm
     atualizar_posicoes_arq(diretorio);
 }
 ```
-Nessa função, como citado anteriormente, eu movo o arquivo, porém para isso eu preciso mover seu conteúdo e seus metadados na lista também. E após move-lo, é preciso atualizar seu índice e sua posição (que indica o primeiro byte do conteúdo)
+Nessa função, como citado anteriormente, eu movo o arquivo, porém para isso eu preciso mover seu conteúdo e seus metadados na lista também. E após move-lo, é preciso atualizar seu índice e sua posição (que indica o primeiro byte do conteúdo).
+O principal desafio dessa função foi a operação com bytes e saber onde o arquivo deve ser inserido após move-lo, é um desafio e sem um papel e um lápis essa função não roda. Para sua implementação foi necessário vários e vários testes.
 
 ## Remove
 
@@ -226,6 +227,61 @@ A função remove member me deu alguns trabalhos por conta das operações com b
 ```
 Eu primeiro remove os metadados, por ficarem no fim do arquivo e atrapalharem menos na hora da remoção e após isso removo o conteúdo, e assim como na função de mover, é necessário atualizar seu indice e posição após a remoção.
 
+## Extrai
+Para extrair um arquivo do meu arquivador, eu usei a seguinte função:
+```c
+    int copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
+{
+    FILE *arquivo_original = fopen(nome_arquivo, "rb");
+    char nome_copia[256];
+    const char *nome_arquivo_sem_dir = strrchr(nome_arquivo, '/');
+    if (nome_arquivo_sem_dir != NULL)
+    {
+        nome_arquivo_sem_dir++; 
+        snprintf(nome_copia, sizeof(nome_copia), "copia_%s", nome_arquivo_sem_dir);
+    }
+    else
+    {
+        snprintf(nome_copia, sizeof(nome_copia), "copia_%s", nome_arquivo);
+    }
+
+    printf("Criando cópia do arquivo: %s\n", nome_copia);
+
+    FILE *arquivo_copia = fopen(nome_copia, "wb");
+    if (arquivo_copia == NULL)
+    {
+        perror("Erro ao criar o arquivo de cópia");
+        fclose(arquivo_original);
+        return 2;
+    }
+    char buffer[1024];
+    size_t bytes_lidos;
+    long long block = get_size(arquivador);
+
+    if (block > sizeof(buffer))
+    {
+        while (block > 0 && (bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivo_original)) > 0)
+        {
+            fwrite(buffer, 1, bytes_lidos, arquivo_copia);
+            block -= bytes_lidos;
+        }
+    }
+    else
+    {
+        bytes_lidos = fread(buffer, 1, block, arquivo_original);
+        fwrite(buffer, 1, bytes_lidos, arquivo_copia);
+    }
+
+    printf("Arquivo copiado com sucesso: %s\n", nome_copia);
+
+    fclose(arquivo_original);
+    fclose(arquivo_copia);
+
+    return 0;
+}
+```
+Onde eu pego o nome do arquivo a ser extraido e crio uma copia, essa copia eu mando para o diretorio 'basm21/' onde o meu programa está sendo executado. E o restante da lógica que era o mais fácil eu deixei na main mesmo.
+
 #Lista
 
 Para manipulação da lista, as principais funções foram:
@@ -242,6 +298,9 @@ Para manipulação da lista, as principais funções foram:
 
 A principal delas sendo a 'carregar_metadados_lista'. Essa função lê um arquivador já existente, lê seu diretório e com base nesse diretório lido, acrescenta na lista.
 
+##BUGS conhecidos
+
+o meu extrair nao funciona quando passado com outro arquivador que não seja o backup.vpp
 
 
 
