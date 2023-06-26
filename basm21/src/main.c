@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv)
 {
-    int i,rt, option;
+    int i, rt, option;
     long long offset;
     struct stat file_stat;
 
@@ -82,18 +82,38 @@ int main(int argc, char **argv)
             break;
         case 'i': // INSERE
             carregar_metadados_lista(&diretorio, arquivador);
-            
             for (i = optind; i < argc; i++)
             {
-                printf("Inserindo arquivo %s\n", argv[i]);
+                nodo_t *arquivoExistente = buscarArquivoPorNome(&diretorio, argv[i]);
+
+                if (arquivoExistente != NULL)
+                {
+                    printf("Arquivo %s será substituído na lista e add ao final.\n", argv[i]);
+                    nodo_t *remove = buscarArquivoPorNome(&diretorio, argv[i]);
+
+                    int resultado = remove_member(argv[i], &diretorio, arquivador);
+
+                    if (resultado != 0)
+                        printf("Erro ao remover o membro.\n");
+
+                    removerNo(&diretorio, remove);
+                    printa_metadados_lista(&diretorio, arquivador);
+
+                    long long offset2 = calcula_offset(arquivador, diretorio);
+
+                    rewind(arquivador);
+                    fwrite(&offset2, sizeof(long long), 1, arquivador);
+                    rewind(arquivador);
+                }
+
                 inserir_arq(argv[i], &diretorio, arquivador, &offset);
+                printf("Arquivo %s inserido\n", argv[i]);
             }
 
             offset = calcula_offset(arquivador, diretorio);
-            printf("Offset: %lld\n", offset);
             fseek(arquivador, 0, SEEK_SET);
             fwrite(&offset, sizeof(long long), 1, arquivador);
-            
+
             rewind(arquivador);
             atualizarIndices(&diretorio);
             atualizar_posicoes_arq(&diretorio);
@@ -116,13 +136,13 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                        nodo_t *agr = diretorio.head;
-                        while (agr != NULL)
-                        {
-                            printf("Extraindo arquivo %s\n", agr->arquivo.nome);
-                            rt = copiar_arquivo_do_arquivador(agr->arquivo.nome, arquivador);
-                            agr = agr->prox;
-                        }
+                    nodo_t *agr = diretorio.head;
+                    while (agr != NULL)
+                    {
+                        printf("Extraindo arquivo %s\n", agr->arquivo.nome);
+                        rt = copiar_arquivo_do_arquivador(agr->arquivo.nome, arquivador);
+                        agr = agr->prox;
+                    }
                 }
             }
             rewind(arquivador);

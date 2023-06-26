@@ -283,7 +283,6 @@ int remove_member(const char *name, dir_t *diretorio, FILE *arquivador)
 {
     nodo_t *removal = buscarArquivoPorNome(diretorio, name);
     long long offset = calcula_offset(arquivador, *diretorio);
-    printf("offset: %lld\n", offset);
 
     if (removal == NULL)
     {
