@@ -1,3 +1,5 @@
+mais fácil de ser visualizado em: https://github.com/brspring/programacao2/edit/main/basm21/LEIAME.md
+
 # Arquivador Vina++
 Arquivador que faz operações com arquivos e seus metadados.
 
@@ -303,9 +305,3 @@ A principal delas sendo a 'carregar_metadados_lista'. Essa função lê um arqui
 ##BUGS conhecidos
 
 o meu extrair nao funciona quando passado com outro arquivador que não seja o backup.vpp
-
-
-
-
-
-
