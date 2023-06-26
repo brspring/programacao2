@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <libgen.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -468,56 +469,52 @@ void carregar_metadados_lista(dir_t *diretorio, FILE *arquivador)
 
 int copiar_arquivo_do_arquivador(const char *nome_arquivo, FILE *arquivador)
 {
-    DIR *dir = opendir(".");
-    if (dir == NULL)
+    FILE *arquivo_original = fopen(nome_arquivo, "rb");
+    if (arquivo_original == NULL)
     {
-        perror("Erro ao abrir o diretório atual");
+        perror("Erro ao abrir o arquivo original");
         return 1;
     }
 
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL)
+    char diretorio_original[1024];
+    strncpy(diretorio_original, nome_arquivo, sizeof(diretorio_original));
+    char *dir_path = dirname(diretorio_original);
+
+    char nome_copia[256];
+    snprintf(nome_copia, sizeof(nome_copia), "%s/copia_%s", dir_path, basename((char*)nome_arquivo));
+
+    printf("Criando cópia do arquivo: %s\n", nome_copia);
+
+    FILE *arquivo_copia = fopen(nome_copia, "wb");
+    if (arquivo_copia == NULL)
     {
-        struct stat st;
-        char path[1024];
-        snprintf(path, sizeof(path), "%s/%s", ".", entry->d_name);
-        if (stat(path, &st) == 0 && S_ISREG(st.st_mode))
+        perror("Erro ao criar o arquivo de cópia");
+        fclose(arquivo_original);
+        return 2;
+    }
+
+    char buffer[1024];
+    size_t bytes_lidos;
+    long long block = get_size(arquivo_original);
+    printf("Tamanho do arquivo: %lld\n", block);
+    if (block > sizeof(buffer))
+    {
+        while (block > 0 && (bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivo_original)) > 0)
         {
-            if (strcmp(entry->d_name, nome_arquivo) == 0)
-            {
-                char nome_copia[256];
-                snprintf(nome_copia, sizeof(nome_copia), "copia_%s", nome_arquivo);
-
-                FILE *arquivo_original = fopen(nome_arquivo, "rb");
-                if (arquivo_original == NULL)
-                {
-                    perror("Erro ao abrir o arquivo original");
-                    closedir(dir);
-                    return 1;
-                }
-
-                FILE *arquivo_copia = fopen(nome_copia, "wb");
-                if (arquivo_copia == NULL)
-                {
-                    perror("Erro ao criar o arquivo de cópia");
-                    fclose(arquivo_original);
-                    closedir(dir);
-                    return 2;
-                }
-
-                char buffer[1024];
-                size_t bytes_lidos;
-                while ((bytes_lidos = fread(buffer, 1, sizeof(buffer), arquivo_original)) > 0)
-                {
-                    fwrite(buffer, 1, bytes_lidos, arquivo_copia);
-                }
-
-                printf("Arquivo copiado com sucesso: %s\n", nome_copia);
-                return 0;
-                break;
-            }
+            fwrite(buffer, 1, bytes_lidos, arquivo_copia);
+            block -= bytes_lidos;
         }
     }
+    else
+    {
+        bytes_lidos = fread(buffer, 1, block, arquivo_original);
+        fwrite(buffer, 1, bytes_lidos, arquivo_copia);
+    }
+
+    printf("Arquivo copiado com sucesso: %s\n", nome_copia);
+
+    fclose(arquivo_original);
+    fclose(arquivo_copia);
+
     return 0;
-    closedir(dir);
 }

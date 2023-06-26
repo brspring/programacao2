@@ -126,6 +126,8 @@ int main(int argc, char **argv)
             break;
         case 'x':
             carregar_metadados_lista(&diretorio, arquivador);
+            rewind(arquivador);
+
             if (strcmp(argv[2], "backup.vpp") == 0)
             {
                 if (argv[3] != NULL)

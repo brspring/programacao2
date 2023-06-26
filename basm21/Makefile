@@ -1,16 +1,25 @@
-parametrosCompilacao=-std=c99 -Wall -Wshadow
-nomePrograma=vina++
+CC = gcc
 
-all: $(nomePrograma)
+SRC_DIR = src
+BIN_DIR = .
 
-$(nomePrograma): src/archive.o src/main.o
-	gcc -o $(nomePrograma) src/archive.o src/main.o $(parametrosCompilacao)
+# arquivos fonte
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(SRCS:.c=.o)
 
-src/archive.o: src/archive.c src/archive.h
-	gcc -c src/archive.c -o src/archive.o $(parametrosCompilacao)
+# nome do executavel
+EXEC = $(BIN_DIR)/vina++
 
-src/main.o: src/main.c
-	gcc -c src/main.c -o src/main.o $(parametrosCompilacao)
+# regra principal
+all: $(EXEC)
 
+$(EXEC): $(OBJS)
+	$(CC) $^ -o $@
+
+# compilar os arquivos fonte
+$(OBJS): %.o: %.c
+	$(CC) -c $< -o $@
+
+# limpa os arquivos temporários e gerados
 clean:
-	rm -f src/*.o src/$(nomePrograma)
+	rm -f $(OBJS) $(EXEC)
